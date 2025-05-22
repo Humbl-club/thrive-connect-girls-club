@@ -130,13 +130,13 @@ const CalendarPage = () => {
                   }
                 }}
                 components={{
-                  DayContent: ({ day, date: dayDate }) => {
+                  DayContent: ({ date: dayDate }) => {
                     const dateStr = dayDate.toDateString();
                     const hasEvent = groupedEvents[dateStr];
                     
                     return (
                       <div className="relative">
-                        <div>{day}</div>
+                        <div>{dayDate.getDate()}</div>
                         {hasEvent && (
                           <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -mb-1">
                             <div className="w-1 h-1 bg-primary rounded-full" />

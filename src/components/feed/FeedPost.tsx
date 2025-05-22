@@ -1,4 +1,3 @@
-
 import { useState } from 'react';
 import { Heart, MessageSquare, MoreHorizontal } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
@@ -20,6 +19,7 @@ export interface PostProps {
   createdAt: Date;
   hasLiked?: boolean;
   className?: string;
+  style?: React.CSSProperties;
 }
 
 export function FeedPost({
@@ -32,6 +32,7 @@ export function FeedPost({
   createdAt,
   hasLiked = false,
   className,
+  style,
 }: PostProps) {
   const [isLiked, setIsLiked] = useState(hasLiked);
   const [likeCount, setLikeCount] = useState(likes);
@@ -46,7 +47,7 @@ export function FeedPost({
   };
 
   return (
-    <div className={cn("bg-white rounded-xl shadow-sm p-4", className)}>
+    <div className={cn("bg-white rounded-xl shadow-sm p-4", className)} style={style}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">

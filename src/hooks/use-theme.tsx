@@ -1,5 +1,6 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
+import { useSettings } from "./use-settings";
 
 type Theme = "light" | "dark";
 
@@ -14,6 +15,13 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
     const savedTheme = localStorage.getItem("theme") as Theme;
+    
+    // Check for system preference if no saved theme
+    if (!savedTheme) {
+      const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+      return prefersDark ? "dark" : "light";
+    }
+    
     return savedTheme || "light";
   });
 

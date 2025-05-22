@@ -177,28 +177,36 @@ export function AnalyticsProvider({ children }: { children: React.ReactNode }) {
       
       if (session?.user) {
         // If authenticated, try to get activity data from database
-        const { data: dbData, error } = await supabase
-          .from('activity_data')
-          .select('*')
-          .eq('user_id', session.user.id)
-          .gte('date', startDate.toISOString().split('T')[0])
-          .lte('date', endDate.toISOString().split('T')[0])
-          .order('date', { ascending: true });
-          
-        if (error) {
-          console.error("Error fetching activity data:", error);
-          // Fall back to mock data
-          data = generateMockActivityData(startDate, endDate);
-        } else if (dbData && dbData.length > 0) {
-          data = dbData.map(item => ({
-            date: item.date,
-            steps: item.steps,
-            caloriesBurned: item.calories_burned,
-            distance: item.distance,
-            activeMinutes: item.active_minutes,
-          }));
-        } else {
-          // No data in database, use mock data
+        try {
+          // Use type assertion to work around TypeScript errors until 
+          // database types are properly updated
+          const { data: dbData, error } = await (supabase
+            .from('activity_data' as any)
+            .select('*')
+            .eq('user_id', session.user.id)
+            .gte('date', startDate.toISOString().split('T')[0])
+            .lte('date', endDate.toISOString().split('T')[0])
+            .order('date', { ascending: true }) as any);
+            
+          if (error) {
+            console.error("Error fetching activity data:", error);
+            // Fall back to mock data
+            data = generateMockActivityData(startDate, endDate);
+          } else if (dbData && dbData.length > 0) {
+            // Use type assertion to handle the database response
+            data = (dbData as any[]).map(item => ({
+              date: item.date,
+              steps: item.steps,
+              caloriesBurned: item.calories_burned,
+              distance: item.distance,
+              activeMinutes: item.active_minutes,
+            }));
+          } else {
+            // No data in database, use mock data
+            data = generateMockActivityData(startDate, endDate);
+          }
+        } catch (error) {
+          console.error("Error querying database:", error);
           data = generateMockActivityData(startDate, endDate);
         }
       } else {

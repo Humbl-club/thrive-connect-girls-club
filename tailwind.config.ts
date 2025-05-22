@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -61,7 +62,14 @@ export default {
 					'accent-foreground': 'hsl(var(--sidebar-accent-foreground))',
 					border: 'hsl(var(--sidebar-border))',
 					ring: 'hsl(var(--sidebar-ring))'
-				}
+				},
+				girls: {
+					purple: '#8A2BE2',
+					pink: '#FF69B4',
+					teal: '#20B2AA',
+					light: '#F8F9FC',
+					dark: '#2D3748',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',
@@ -84,12 +92,29 @@ export default {
 					to: {
 						height: '0'
 					}
-				}
+				},
+				'pulse-gentle': {
+					'0%, 100%': { opacity: '1' },
+					'50%': { opacity: '0.8' }
+				},
+				'slide-up': {
+					'0%': { transform: 'translateY(20px)', opacity: '0' },
+					'100%': { transform: 'translateY(0)', opacity: '1' }
+				},
 			},
 			animation: {
 				'accordion-down': 'accordion-down 0.2s ease-out',
-				'accordion-up': 'accordion-up 0.2s ease-out'
-			}
+				'accordion-up': 'accordion-up 0.2s ease-out',
+				'pulse-gentle': 'pulse-gentle 2s ease-in-out infinite',
+				'slide-up': 'slide-up 0.5s ease-out',
+			},
+			backgroundImage: {
+				'gradient-radial': 'radial-gradient(var(--tw-gradient-stops))',
+				'girls-gradient': 'linear-gradient(135deg, #8A2BE2, #FF69B4)',
+			},
+			boxShadow: {
+				'girls': '0 4px 14px 0 rgba(138, 43, 226, 0.15)',
+			},
 		}
 	},
 	plugins: [require("tailwindcss-animate")],

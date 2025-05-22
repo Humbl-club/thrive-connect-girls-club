@@ -1,6 +1,7 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 export interface UserSettings {
   dailyStepGoal: number;
@@ -33,20 +34,19 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export function SettingsProvider({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<UserSettings>(defaultSettings);
   const [isLoading, setIsLoading] = useState(true);
+  const { user } = useAuth();
 
   useEffect(() => {
     const loadSettings = async () => {
       setIsLoading(true);
       
-      // Try to get user session
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
+      if (user) {
         // If authenticated, try to get user settings from database
         try {
-          const { data, error } = await supabase.from('user_settings')
+          const { data, error } = await supabase
+            .from('user_settings')
             .select('settings')
-            .eq('user_id', session.user.id)
+            .eq('user_id', user.id)
             .maybeSingle();
             
           if (error) throw error;
@@ -83,7 +83,7 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     };
     
     loadSettings();
-  }, []);
+  }, [user]);
 
   const updateSettings = async (newSettings: Partial<UserSettings>) => {
     const updatedSettings = { ...settings, ...newSettings };
@@ -92,16 +92,13 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     // Store in local storage for guests or as backup
     localStorage.setItem("user_settings", JSON.stringify(updatedSettings));
     
-    // Try to get user session
-    const { data: { session } } = await supabase.auth.getSession();
-    
-    if (session?.user) {
+    if (user) {
       // If authenticated, store in database
       try {
         const { error } = await supabase
           .from('user_settings')
           .upsert({
-            user_id: session.user.id,
+            user_id: user.id,
             settings: updatedSettings,
             updated_at: new Date().toISOString()
           }, 

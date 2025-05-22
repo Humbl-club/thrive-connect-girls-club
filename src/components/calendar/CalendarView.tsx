@@ -18,27 +18,32 @@ export function CalendarView({ events, date, setDate }: CalendarViewProps) {
   // Get dates that have events
   const eventDates = Object.keys(groupedEvents).map(dateStr => new Date(dateStr));
   
+  // Handle month navigation
+  const goToPreviousMonth = () => {
+    if (!date) return;
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() - 1);
+    setDate(newDate);
+  };
+  
+  const goToNextMonth = () => {
+    if (!date) return;
+    const newDate = new Date(date);
+    newDate.setMonth(date.getMonth() + 1);
+    setDate(newDate);
+  };
+  
   return (
     <>
       <div className="bg-white rounded-xl girls-shadow p-4 mb-6 animate-enter">
         <div className="flex items-center justify-between mb-4">
-          <Button variant="outline" size="icon" onClick={() => setDate(prev => {
-            if (!prev) return new Date();
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() - 1);
-            return newDate;
-          })}>
+          <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
             <ChevronLeft className="h-4 w-4" />
           </Button>
           <h2 className="font-medium">
             {date?.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h2>
-          <Button variant="outline" size="icon" onClick={() => setDate(prev => {
-            if (!prev) return new Date();
-            const newDate = new Date(prev);
-            newDate.setMonth(prev.getMonth() + 1);
-            return newDate;
-          })}>
+          <Button variant="outline" size="icon" onClick={goToNextMonth}>
             <ChevronRight className="h-4 w-4" />
           </Button>
         </div>

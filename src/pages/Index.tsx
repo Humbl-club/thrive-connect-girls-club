@@ -1,12 +1,15 @@
 
 import { useState } from "react";
-import { Medal, Flame } from "lucide-react";
+import { Link } from "react-router-dom";
+import { Medal, Flame, LineChart, Users, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StepCounter } from "@/components/ui/step-counter";
 import { LeaderboardCard } from "@/components/challenges/LeaderboardCard";
 import { FeedPost } from "@/components/feed/FeedPost";
 import { EventCard } from "@/components/calendar/EventCard";
+import { ThemeCustomizer } from "@/components/ui/theme-customizer";
+import { useSettings } from "@/hooks/use-settings";
 
 // Mock data
 const mockLeaderboardUsers = [
@@ -54,7 +57,13 @@ const mockRecentPosts = [
 ];
 
 const Index = () => {
+  const { settings } = useSettings();
   const [currentSteps, setCurrentSteps] = useState(5621);
+  
+  const updateSteps = () => {
+    // Simulate step update for demo purposes
+    setCurrentSteps(prev => Math.min(prev + Math.floor(Math.random() * 500) + 100, settings.dailyStepGoal));
+  };
   
   return (
     <AppLayout>
@@ -68,28 +77,35 @@ const Index = () => {
               Ready to reach your goals today?
             </p>
           </div>
-          <Button variant="outline" size="icon" className="rounded-full">
-            <Flame className="h-5 w-5 text-secondary" />
-          </Button>
+          <div className="flex gap-2">
+            <ThemeCustomizer />
+            <Link to="/settings">
+              <Button variant="outline" size="icon" className="rounded-full">
+                <Settings className="h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
         </div>
 
         {/* Today's Progress */}
         <div className="bg-white rounded-xl girls-shadow p-5 mb-6 animate-enter">
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-lg">Today's Progress</h2>
-            <Button variant="ghost" size="sm" className="flex items-center gap-1 text-primary text-xs">
-              <Medal className="h-4 w-4" />
-              Weekly Goal
-            </Button>
+            <Link to="/analytics">
+              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-primary text-xs">
+                <LineChart className="h-4 w-4" />
+                View Stats
+              </Button>
+            </Link>
           </div>
           
-          <div className="flex justify-center mb-2">
-            <StepCounter currentSteps={currentSteps} goalSteps={10000} size="lg" />
+          <div className="flex justify-center mb-2" onClick={updateSteps}>
+            <StepCounter currentSteps={currentSteps} goalSteps={settings.dailyStepGoal} size="lg" />
           </div>
           
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-4">
-              {10000 - currentSteps} steps to reach your daily goal
+              {settings.dailyStepGoal - currentSteps} steps to reach your daily goal
             </p>
             
             <div className="grid grid-cols-3 gap-4">
@@ -111,7 +127,15 @@ const Index = () => {
 
         {/* Weekly Challenge */}
         <div className="mb-6 animate-enter" style={{ animationDelay: "100ms" }}>
-          <h2 className="font-semibold text-lg mb-3">Weekly Challenge</h2>
+          <div className="flex justify-between items-center mb-3">
+            <h2 className="font-semibold text-lg">Weekly Challenge</h2>
+            <Link to="/social">
+              <Button variant="ghost" size="sm" className="flex items-center gap-1 text-primary text-xs p-0">
+                <Users className="h-4 w-4" />
+                Social
+              </Button>
+            </Link>
+          </div>
           <LeaderboardCard
             title="Spring Step Challenge"
             description="May 20-26"
@@ -125,9 +149,11 @@ const Index = () => {
         <div className="mb-6 animate-enter" style={{ animationDelay: "200ms" }}>
           <div className="flex justify-between items-center mb-3">
             <h2 className="font-semibold text-lg">Upcoming Events</h2>
-            <Button variant="link" size="sm" className="text-primary">
-              View All
-            </Button>
+            <Link to="/calendar">
+              <Button variant="link" size="sm" className="text-primary">
+                View All
+              </Button>
+            </Link>
           </div>
           
           <div className="space-y-3">
@@ -141,9 +167,11 @@ const Index = () => {
         <div className="animate-enter" style={{ animationDelay: "300ms" }}>
           <div className="flex justify-between items-center mb-3">
             <h2 className="font-semibold text-lg">Recent Posts</h2>
-            <Button variant="link" size="sm" className="text-primary">
-              View All
-            </Button>
+            <Link to="/feed">
+              <Button variant="link" size="sm" className="text-primary">
+                View All
+              </Button>
+            </Link>
           </div>
           
           <div className="space-y-4">

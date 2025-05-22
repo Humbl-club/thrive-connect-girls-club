@@ -1,6 +1,5 @@
 
 import { createContext, useContext, useState, useEffect } from "react";
-import { useSettings } from "./use-settings";
 
 type Theme = "light" | "dark";
 
@@ -14,6 +13,7 @@ const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>(() => {
+    // Try to get theme from localStorage first
     const savedTheme = localStorage.getItem("theme") as Theme;
     
     // Check for system preference if no saved theme

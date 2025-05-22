@@ -44,17 +44,15 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
       if (session?.user) {
         // If authenticated, try to get user settings from database
         try {
-          // Use type assertion to work around TypeScript errors
-          const { data, error } = await (supabase
-            .from('user_settings' as any)
+          const { data, error } = await supabase.from('user_settings')
             .select('settings')
             .eq('user_id', session.user.id)
-            .single() as any);
+            .maybeSingle();
             
           if (error) throw error;
           
           if (data?.settings) {
-            setSettings({ ...defaultSettings, ...(data.settings as any) });
+            setSettings({ ...defaultSettings, ...data.settings as Partial<UserSettings> });
           }
         } catch (error) {
           console.error("Error loading user settings:", error);
@@ -100,14 +98,14 @@ export function SettingsProvider({ children }: { children: React.ReactNode }) {
     if (session?.user) {
       // If authenticated, store in database
       try {
-        // Use type assertion to work around TypeScript errors
-        const { error } = await (supabase
-          .from('user_settings' as any)
+        const { error } = await supabase
+          .from('user_settings')
           .upsert({
             user_id: session.user.id,
             settings: updatedSettings,
             updated_at: new Date().toISOString()
-          }, { onConflict: 'user_id' }) as any);
+          }, 
+          { onConflict: 'user_id' });
           
         if (error) throw error;
       } catch (error) {

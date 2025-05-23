@@ -1,153 +1,157 @@
 
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { FeedPost } from "@/components/feed/FeedPost";
 import { FeedPostForm } from "@/components/feed/FeedPostForm";
-import { Loader2 } from "lucide-react";
+import { EnhancedFeedPost, FeedPostSkeleton } from "@/components/feed/EnhancedFeedPost";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
-import { useToast } from "@/components/ui/use-toast";
+import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
+import { Button } from "@/components/ui/button";
+import { RefreshCw } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
-const Feed = () => {
-  const [posts, setPosts] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const { user } = useAuth();
-  const { toast } = useToast();
-  
-  // Fetch posts from Supabase
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        // Get posts with user profiles
-        const { data: postsData, error: postsError } = await supabase
-          .from('feed_posts')
-          .select('*, profiles:user_id(*)')
-          .order('created_at', { ascending: false });
-        
-        if (postsError) throw postsError;
-        
-        // For each post, check if current user has liked it and get comments
-        const enhancedPosts = await Promise.all((postsData || []).map(async (post) => {
-          // Get like status
-          let hasLiked = false;
-          if (user) {
-            const { data: likeData } = await supabase
-              .from('post_likes')
-              .select('id')
-              .match({ user_id: user.id, post_id: post.id })
-              .single();
-            
-            hasLiked = !!likeData;
-          }
-          
-          // Get comments with user profiles
-          const { data: commentsData } = await supabase
-            .from('post_comments')
-            .select('*, profiles:user_id(*)')
-            .eq('post_id', post.id)
-            .order('created_at', { ascending: true });
-          
-          // Format comments for FeedPost component
-          const comments = (commentsData || []).map(comment => ({
-            id: comment.id,
-            content: comment.content,
-            created_at: comment.created_at,
-            user: {
-              id: comment.user_id,
-              username: comment.profiles?.username || `user_${comment.user_id.substring(0, 6)}`,
-              avatarUrl: comment.profiles?.avatar_url
-            }
-          }));
-          
-          const username = post.profiles?.username || `user_${post.user_id.substring(0, 6)}`;
-          
-          return {
-            id: post.id,
-            user: {
-              id: post.user_id,
-              username: username,
-              avatarUrl: post.profiles?.avatar_url
-            },
-            content: post.content,
-            imageUrl: post.image_url,
-            likes: post.likes || 0,
-            comments,
-            createdAt: post.created_at,
-            hasLiked,
-          };
-        }));
-        
-        setPosts(enhancedPosts);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-        toast({
-          title: "Error",
-          description: "Failed to load posts. Please try again later.",
-          variant: "destructive",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchPosts();
-    
-    // Set up real-time subscription for new posts
-    const channel = supabase
-      .channel('public:feed_posts')
-      .on('postgres_changes', 
-        { event: '*', schema: 'public', table: 'feed_posts' }, 
-        () => {
-          fetchPosts(); // Refetch posts when changes occur
-        }
-      )
-      .subscribe();
-    
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, toast]);
-  
-  const handlePostCreated = () => {
-    // This will refetch posts after a new post is created
-  };
-  
-  return (
-    <AppLayout>
-      <div className="container px-4 py-6 pb-20 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-6">Club Feed</h1>
-        
-        {/* Create Post */}
-        <FeedPostForm onPostCreated={handlePostCreated} />
-        
-        {/* Posts Feed */}
-        {loading ? (
-          <div className="flex flex-col items-center justify-center py-10">
-            <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-            <p className="text-muted-foreground">Loading posts...</p>
-          </div>
-        ) : posts.length === 0 ? (
-          <div className="text-center py-10">
-            <p className="text-muted-foreground">No posts yet. Be the first to post!</p>
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {posts.map((post, index) => (
-              <FeedPost
-                key={post.id}
-                {...post}
-                className="animate-enter"
-                style={{ animationDelay: `${index * 100}ms` }}
-                onLikeToggle={handlePostCreated}
-                onCommentAdded={handlePostCreated}
-              />
-            ))}
-          </div>
-        )}
-      </div>
-    </AppLayout>
-  );
+type Post = {
+  id: string;
+  user_id: string;
+  content: string;
+  image_url: string | null;
+  created_at: string;
+  likes: number;
+  profiles: {
+    username: string | null;
+    avatar_url: string | null;
+  } | null;
+  hasLiked?: boolean;
 };
 
-export default Feed;
+export default function Feed() {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const [posts, setPosts] = useState<Post[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+
+  useEffect(() => {
+    fetchPosts();
+  }, [user]);
+
+  const fetchPosts = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch posts with profile information joined
+      const { data: postsData, error } = await supabase
+        .from('feed_posts')
+        .select(`
+          *,
+          profiles:user_id (
+            username, 
+            avatar_url
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .limit(20);
+
+      if (error) throw error;
+
+      // If user is logged in, check which posts they've liked
+      let postsWithLikeStatus = postsData;
+      
+      if (user) {
+        const { data: likedPosts, error: likesError } = await supabase
+          .from('post_likes')
+          .select('post_id')
+          .eq('user_id', user.id);
+
+        if (likesError) throw likesError;
+
+        const likedPostIds = new Set(likedPosts.map(like => like.post_id));
+        
+        postsWithLikeStatus = postsData.map(post => ({
+          ...post,
+          hasLiked: likedPostIds.has(post.id)
+        }));
+      }
+
+      setPosts(postsWithLikeStatus);
+    } catch (error: any) {
+      console.error("Error fetching posts:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load posts",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchPosts();
+    setRefreshing(false);
+  };
+
+  const handleNewPost = () => {
+    fetchPosts();
+  };
+
+  const handleDeletePost = (postId: string) => {
+    setPosts(current => current.filter(post => post.id !== postId));
+  };
+
+  return (
+    <ProfileProtectedRoute>
+      <AppLayout>
+        <div className="container max-w-2xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <h1 className="text-2xl font-bold">Feed</h1>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="mb-6">
+            <FeedPostForm onPostCreated={handleNewPost} />
+          </div>
+
+          <div className="space-y-4">
+            {loading ? (
+              <>
+                <FeedPostSkeleton />
+                <FeedPostSkeleton />
+                <FeedPostSkeleton />
+              </>
+            ) : posts.length > 0 ? (
+              posts.map((post) => (
+                <EnhancedFeedPost
+                  key={post.id}
+                  id={post.id}
+                  userId={post.user_id}
+                  username={post.profiles?.username || "User"}
+                  userAvatar={post.profiles?.avatar_url || undefined}
+                  content={post.content}
+                  imageUrl={post.image_url || undefined}
+                  createdAt={post.created_at}
+                  likes={post.likes || 0}
+                  hasLiked={post.hasLiked}
+                  onDelete={handleDeletePost}
+                />
+              ))
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">No posts yet. Be the first to share!</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </AppLayout>
+    </ProfileProtectedRoute>
+  );
+}

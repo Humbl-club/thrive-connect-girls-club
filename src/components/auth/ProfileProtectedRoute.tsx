@@ -1,7 +1,6 @@
 
 import { Navigate } from "react-router-dom";
 import { useAuth } from "./AuthProvider";
-import { useEffect, useState } from "react";
 
 interface ProfileProtectedRouteProps {
   children: React.ReactNode;
@@ -13,26 +12,22 @@ export function ProfileProtectedRoute({
   requiresProfile = true 
 }: ProfileProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
-  const [authReady, setAuthReady] = useState(false);
   
-  useEffect(() => {
-    if (!loading) {
-      console.log("ProfileProtectedRoute - Auth ready. User:", !!user, "Profile:", !!profile);
-      if (profile) {
-        console.log("Profile details:", {
-          full_name: profile.full_name,
-          username: profile.username,
-          instagram_handle: profile.instagram_handle
-        });
-      }
-      setAuthReady(true);
-    }
-  }, [loading, user, profile]);
+  console.log("ProfileProtectedRoute - State:", { 
+    loading, 
+    hasUser: !!user, 
+    hasProfile: !!profile,
+    profileData: profile 
+  });
   
   // Show loading while auth is initializing
-  if (loading || !authReady) {
-    console.log("ProfileProtectedRoute - Loading auth state...");
-    return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  if (loading) {
+    console.log("ProfileProtectedRoute - Still loading auth state...");
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
   }
   
   // Redirect to auth if no user

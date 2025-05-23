@@ -82,7 +82,10 @@ export default function ProfileSetup() {
   };
 
   const handleSubmit = async (values: FormValues) => {
-    if (!user) return;
+    if (!user) {
+      console.error("No user found in ProfileSetup");
+      return;
+    }
 
     try {
       setLoading(true);
@@ -106,7 +109,7 @@ export default function ProfileSetup() {
         throw error;
       }
 
-      console.log("Profile updated successfully, refreshing profile data...");
+      console.log("Profile updated successfully");
 
       // Refresh the profile in the context to get the updated data
       await refreshProfile();
@@ -118,7 +121,7 @@ export default function ProfileSetup() {
 
       console.log("Profile refreshed, navigating to feed...");
       
-      // Navigate immediately after successful update
+      // Navigate to feed
       navigate("/feed", { replace: true });
 
     } catch (error: any) {

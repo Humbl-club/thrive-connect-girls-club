@@ -37,6 +37,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.log("Profile found:", profile);
         setProfile(profile);
       } else {
+        console.log("No profile found, creating basic profile");
         // Create a basic profile if none exists
         const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
         
@@ -87,38 +88,55 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log("AuthProvider: Setting up auth listener");
     
-    // Set up auth state listener FIRST
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        console.log("Auth state change:", event, !!session);
+    let isMounted = true;
+    
+    // Get initial session first
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error("Error getting initial session:", error);
+      }
+      
+      if (isMounted) {
+        console.log("Initial session check:", !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
-          // Use setTimeout to avoid blocking the auth state change
-          setTimeout(() => {
-            fetchUserProfile(session.user);
-          }, 0);
+          fetchUserProfile(session.user);
         } else {
           setProfile(null);
+        }
+        
+        setLoading(false);
+      }
+    });
+
+    // Set up auth state listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (isMounted) {
+          console.log("Auth state change:", event, !!session);
+          setSession(session);
+          setUser(session?.user ?? null);
+          
+          if (session?.user) {
+            // Use setTimeout to avoid blocking the auth state change
+            setTimeout(() => {
+              if (isMounted) {
+                fetchUserProfile(session.user);
+              }
+            }, 0);
+          } else {
+            setProfile(null);
+          }
         }
       }
     );
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      console.log("Initial session check:", !!session);
-      setSession(session);
-      setUser(session?.user ?? null);
-      
-      if (session?.user) {
-        fetchUserProfile(session.user);
-      }
-      
-      setLoading(false);
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      isMounted = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signOut = async () => {

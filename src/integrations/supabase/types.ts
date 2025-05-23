@@ -11,39 +11,47 @@ export type Database = {
     Tables: {
       activity_data: {
         Row: {
-          active_minutes: number
-          calories_burned: number
-          created_at: string
+          active_minutes: number | null
+          calories_burned: number | null
+          created_at: string | null
           date: string
-          distance: number
+          distance: number | null
           id: string
-          steps: number
-          updated_at: string
+          steps: number | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          active_minutes?: number
-          calories_burned?: number
-          created_at?: string
+          active_minutes?: number | null
+          calories_burned?: number | null
+          created_at?: string | null
           date: string
-          distance?: number
+          distance?: number | null
           id?: string
-          steps?: number
-          updated_at?: string
+          steps?: number | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          active_minutes?: number
-          calories_burned?: number
-          created_at?: string
+          active_minutes?: number | null
+          calories_burned?: number | null
+          created_at?: string | null
           date?: string
-          distance?: number
+          distance?: number | null
           id?: string
-          steps?: number
-          updated_at?: string
+          steps?: number | null
+          updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "activity_data_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       calendar_events: {
         Row: {
@@ -85,7 +93,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "calendar_events_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       challenge_participants: {
         Row: {
@@ -118,6 +134,13 @@ export type Database = {
             columns: ["challenge_id"]
             isOneToOne: false
             referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "challenge_participants_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -153,7 +176,15 @@ export type Database = {
           title?: string
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "challenges_created_by_fkey"
+            columns: ["created_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feed_posts: {
         Row: {
@@ -186,7 +217,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feed_posts_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       post_comments: {
         Row: {
@@ -218,6 +257,13 @@ export type Database = {
             referencedRelation: "feed_posts"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "post_comments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
         ]
       }
       post_likes: {
@@ -245,6 +291,13 @@ export type Database = {
             columns: ["post_id"]
             isOneToOne: false
             referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "post_likes_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
         ]
@@ -298,7 +351,15 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "user_settings_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {

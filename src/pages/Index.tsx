@@ -1,7 +1,6 @@
-
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { Medal, Flame, LineChart, Users, Settings } from "lucide-react";
+import { Medal, Flame, LineChart, Users, Settings, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { StepCounter } from "@/components/ui/step-counter";

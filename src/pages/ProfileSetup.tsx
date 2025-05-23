@@ -86,7 +86,7 @@ export default function ProfileSetup() {
 
     try {
       setLoading(true);
-      console.log("Starting profile update...");
+      console.log("Starting profile update with values:", values);
 
       // Update the profiles table
       const { error } = await supabase
@@ -101,9 +101,12 @@ export default function ProfileSetup() {
         })
         .eq('id', user.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Profile update error:", error);
+        throw error;
+      }
 
-      console.log("Profile updated successfully");
+      console.log("Profile updated successfully, refreshing profile data...");
 
       // Refresh the profile in the context to get the updated data
       await refreshProfile();
@@ -113,15 +116,13 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      console.log("Redirecting to feed...");
+      console.log("Profile refreshed, navigating to feed...");
       
-      // Use navigate instead of window.location for better React Router integration
-      setTimeout(() => {
-        navigate("/feed", { replace: true });
-      }, 1000);
+      // Navigate immediately after successful update
+      navigate("/feed", { replace: true });
 
     } catch (error: any) {
-      console.error("Profile update error:", error);
+      console.error("Profile setup error:", error);
       toast({
         title: "Error",
         description: error.message || "An error occurred while creating your profile",

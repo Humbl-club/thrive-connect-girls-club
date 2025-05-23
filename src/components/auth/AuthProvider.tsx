@@ -22,6 +22,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchUserProfile = async (user: User) => {
     try {
+      console.log("Fetching profile for user:", user.id);
       const { data: profile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -33,6 +34,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (profile) {
+        console.log("Profile found:", profile);
         setProfile(profile);
       } else {
         // Create a basic profile if none exists
@@ -58,6 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             avatar_url: user.user_metadata?.avatar_url || null,
           });
         } else {
+          console.log("New profile created:", newProfile);
           setProfile(newProfile);
         }
       }
@@ -76,18 +79,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const refreshProfile = async () => {
     if (user) {
+      console.log("Refreshing profile...");
       await fetchUserProfile(user);
     }
   };
 
   useEffect(() => {
+    console.log("AuthProvider: Setting up auth listener");
+    
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
+        console.log("Auth state change:", event, !!session);
         setSession(session);
         setUser(session?.user ?? null);
         
         if (session?.user) {
+          // Use setTimeout to avoid blocking the auth state change
           setTimeout(() => {
             fetchUserProfile(session.user);
           }, 0);
@@ -99,6 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // THEN check for existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
+      console.log("Initial session check:", !!session);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -113,6 +122,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    console.log("Signing out...");
     await supabase.auth.signOut();
   };
 

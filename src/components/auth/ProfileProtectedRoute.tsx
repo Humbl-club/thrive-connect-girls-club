@@ -17,7 +17,7 @@ export function ProfileProtectedRoute({
   
   useEffect(() => {
     if (!loading) {
-      console.log("Auth ready - User:", !!user, "Profile:", !!profile);
+      console.log("ProfileProtectedRoute - Auth ready. User:", !!user, "Profile:", !!profile);
       if (profile) {
         console.log("Profile details:", {
           full_name: profile.full_name,
@@ -31,13 +31,13 @@ export function ProfileProtectedRoute({
   
   // Show loading while auth is initializing
   if (loading || !authReady) {
-    console.log("Loading auth state...");
+    console.log("ProfileProtectedRoute - Loading auth state...");
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
   
   // Redirect to auth if no user
   if (!user) {
-    console.log("No user found, redirecting to auth");
+    console.log("ProfileProtectedRoute - No user found, redirecting to auth");
     return <Navigate to="/auth" replace />;
   }
 
@@ -45,19 +45,23 @@ export function ProfileProtectedRoute({
   if (requiresProfile) {
     // If no profile exists at all, redirect to setup
     if (!profile) {
-      console.log("No profile found, redirecting to setup");
+      console.log("ProfileProtectedRoute - No profile found, redirecting to setup");
       return <Navigate to="/profile-setup" replace />;
     }
     
-    // Check if profile is incomplete
+    // Check if profile is incomplete (missing required fields)
     const isProfileIncomplete = !profile.full_name || !profile.username || !profile.instagram_handle;
     
     if (isProfileIncomplete) {
-      console.log("Profile incomplete, redirecting to setup");
+      console.log("ProfileProtectedRoute - Profile incomplete, redirecting to setup. Missing:", {
+        full_name: !profile.full_name,
+        username: !profile.username,
+        instagram_handle: !profile.instagram_handle
+      });
       return <Navigate to="/profile-setup" replace />;
     }
     
-    console.log("Profile complete, allowing access");
+    console.log("ProfileProtectedRoute - Profile complete, allowing access");
   }
   
   return <>{children}</>;

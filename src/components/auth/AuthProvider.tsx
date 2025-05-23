@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           setTimeout(() => {
-            fetchProfile(session.user.id);
+            createUserProfile(session.user);
           }, 0);
         } else {
           setProfile(null);
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        fetchProfile(session.user.id);
+        createUserProfile(session.user);
       }
       
       setLoading(false);
@@ -51,58 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const fetchProfile = async (userId: string) => {
+  const createUserProfile = (user: User) => {
     try {
-      // Check if profile exists
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('id', userId)
-        .single();
-        
-      if (error) {
-        if (error.code === 'PGRST116') {
-          // Profile doesn't exist, create one
-          await createUserProfile(userId);
-          // Fetch the newly created profile
-          const { data: newProfile, error: newProfileError } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', userId)
-            .single();
-            
-          if (newProfileError) throw newProfileError;
-          setProfile(newProfile);
-        } else {
-          throw error;
-        }
-      } else {
-        setProfile(data);
-      }
-    } catch (error) {
-      console.error('Error fetching profile:', error);
-    }
-  };
-
-  const createUserProfile = async (userId: string) => {
-    try {
-      // Get user email from auth
-      const { data } = await supabase.auth.getUser(userId);
-      const user = data?.user;
-      
-      if (!user) return;
-      
-      // Create profile with username derived from email
+      // Since we don't have a profiles table yet, create a profile object from user data
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
       
-      await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
-          username,
-          full_name: user.user_metadata?.full_name || null,
-          avatar_url: user.user_metadata?.avatar_url || null,
-        });
+      setProfile({
+        id: user.id,
+        username,
+        full_name: user.user_metadata?.full_name || null,
+        avatar_url: user.user_metadata?.avatar_url || null,
+      });
     } catch (error) {
       console.error('Error creating user profile:', error);
     }

@@ -1,4 +1,3 @@
-
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { FriendsList } from "@/components/social/FriendsList";
@@ -26,7 +25,20 @@ const mockPosts = [
     content: "Just completed my first 10K run! Thanks to everyone for the encouragement!",
     imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
     likes: 24,
-    comments: 5,
+    comments: [
+      {
+        id: "comment1",
+        content: "Amazing work!",
+        created_at: new Date(2025, 4, 21, 16, 30).toISOString(),
+        user: { id: "3", username: "Emma", avatarUrl: "" }
+      },
+      {
+        id: "comment2",
+        content: "Inspiring!",
+        created_at: new Date(2025, 4, 21, 17, 15).toISOString(),
+        user: { id: "4", username: "Jessica", avatarUrl: "" }
+      }
+    ],
     createdAt: new Date(2025, 4, 21, 14, 32),
     hasLiked: true
   },
@@ -35,7 +47,14 @@ const mockPosts = [
     user: { id: "1", username: "Ashley", avatarUrl: "" },
     content: "Morning workout done! Starting the day with positive energy. 💪",
     likes: 18,
-    comments: 3,
+    comments: [
+      {
+        id: "comment3",
+        content: "That's the spirit!",
+        created_at: new Date(2025, 4, 22, 9, 20).toISOString(),
+        user: { id: "5", username: "Sophia", avatarUrl: "" }
+      }
+    ],
     createdAt: new Date(2025, 4, 22, 8, 15),
     hasLiked: false
   }

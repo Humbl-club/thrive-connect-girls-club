@@ -3,7 +3,6 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { FeedPost } from "@/components/feed/FeedPost";
 import { FeedPostForm } from "@/components/feed/FeedPostForm";
-import { Separator } from "@/components/ui/separator";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
@@ -22,15 +21,7 @@ const Feed = () => {
         // Get posts with user profiles
         const { data: postsData, error: postsError } = await supabase
           .from('feed_posts')
-          .select(`
-            *,
-            profiles:user_id (
-              id,
-              username,
-              full_name,
-              avatar_url
-            )
-          `)
+          .select('*')
           .order('created_at', { ascending: false });
         
         if (postsError) throw postsError;
@@ -52,15 +43,7 @@ const Feed = () => {
           // Get comments
           const { data: commentsData } = await supabase
             .from('post_comments')
-            .select(`
-              *,
-              profiles:user_id (
-                id,
-                username,
-                full_name,
-                avatar_url
-              )
-            `)
+            .select('*')
             .eq('post_id', post.id)
             .order('created_at', { ascending: true });
           
@@ -70,9 +53,9 @@ const Feed = () => {
             content: comment.content,
             created_at: comment.created_at,
             user: {
-              id: comment.profiles.id,
-              username: comment.profiles.username || comment.profiles.full_name || 'User',
-              avatarUrl: comment.profiles.avatar_url,
+              id: comment.user_id,
+              username: `user_${comment.user_id.substring(0, 6)}`,
+              avatarUrl: null,
             }
           }));
           
@@ -80,8 +63,8 @@ const Feed = () => {
             id: post.id,
             user: {
               id: post.user_id,
-              username: post.profiles?.username || post.profiles?.full_name || 'User',
-              avatarUrl: post.profiles?.avatar_url,
+              username: `user_${post.user_id.substring(0, 6)}`,
+              avatarUrl: null,
             },
             content: post.content,
             imageUrl: post.image_url,

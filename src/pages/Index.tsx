@@ -50,7 +50,14 @@ const mockRecentPosts = [
     content: "Just completed my first 10K run! Thanks to everyone for the encouragement!",
     imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
     likes: 24,
-    comments: 5,
+    comments: [
+      {
+        id: "comment1",
+        content: "Amazing job!",
+        created_at: new Date(2025, 4, 21, 15, 10).toISOString(),
+        user: { id: "3", username: "Emma", avatarUrl: "" }
+      }
+    ],
     createdAt: new Date(2025, 4, 21, 14, 32),
     hasLiked: true
   }

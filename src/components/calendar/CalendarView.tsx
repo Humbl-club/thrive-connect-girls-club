@@ -54,7 +54,7 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
           mode="single"
           selected={date}
           onSelect={setDate}
-          className="rounded-md text-black [&_.rdp-head_cell]:text-black [&_.rdp-day]:text-black [&_.rdp-day_today]:text-black [&_.rdp-day_selected]:text-white"
+          className="rounded-md"
           modifiers={{
             event: eventDates,
           }}
@@ -71,7 +71,7 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
               
               return (
                 <div className="relative">
-                  <div className="text-black">{dayDate.getDate()}</div>
+                  <div className="text-black font-medium">{dayDate.getDate()}</div>
                   {hasEvent && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -mb-1">
                       <div className="w-1 h-1 bg-primary rounded-full" />

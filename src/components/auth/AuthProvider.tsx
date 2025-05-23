@@ -53,16 +53,58 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const fetchProfile = async (userId: string) => {
     try {
+      // Check if profile exists
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('id', userId)
         .single();
         
-      if (error) throw error;
-      setProfile(data);
+      if (error) {
+        if (error.code === 'PGRST116') {
+          // Profile doesn't exist, create one
+          await createUserProfile(userId);
+          // Fetch the newly created profile
+          const { data: newProfile, error: newProfileError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', userId)
+            .single();
+            
+          if (newProfileError) throw newProfileError;
+          setProfile(newProfile);
+        } else {
+          throw error;
+        }
+      } else {
+        setProfile(data);
+      }
     } catch (error) {
       console.error('Error fetching profile:', error);
+    }
+  };
+
+  const createUserProfile = async (userId: string) => {
+    try {
+      // Get user email from auth
+      const { data } = await supabase.auth.getUser(userId);
+      const user = data?.user;
+      
+      if (!user) return;
+      
+      // Create profile with username derived from email
+      const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
+      
+      await supabase
+        .from('profiles')
+        .insert({
+          id: userId,
+          username,
+          full_name: user.user_metadata?.full_name || null,
+          avatar_url: user.user_metadata?.avatar_url || null,
+        });
+    } catch (error) {
+      console.error('Error creating user profile:', error);
     }
   };
 

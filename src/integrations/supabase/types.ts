@@ -45,32 +45,209 @@ export type Database = {
         }
         Relationships: []
       }
-      profiles: {
+      calendar_events: {
         Row: {
-          avatar_url: string | null
           created_at: string | null
-          full_name: string | null
+          description: string | null
+          end_time: string | null
+          event_date: string
           id: string
+          is_attending: boolean | null
+          location: string | null
+          start_time: string
+          title: string
           updated_at: string | null
-          username: string | null
+          user_id: string
         }
         Insert: {
-          avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
-          id: string
+          description?: string | null
+          end_time?: string | null
+          event_date: string
+          id?: string
+          is_attending?: boolean | null
+          location?: string | null
+          start_time: string
+          title: string
           updated_at?: string | null
-          username?: string | null
+          user_id: string
         }
         Update: {
-          avatar_url?: string | null
           created_at?: string | null
-          full_name?: string | null
+          description?: string | null
+          end_time?: string | null
+          event_date?: string
           id?: string
+          is_attending?: boolean | null
+          location?: string | null
+          start_time?: string
+          title?: string
           updated_at?: string | null
-          username?: string | null
+          user_id?: string
         }
         Relationships: []
+      }
+      challenge_participants: {
+        Row: {
+          challenge_id: string
+          created_at: string | null
+          id: string
+          steps: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          created_at?: string | null
+          id?: string
+          steps?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          created_at?: string | null
+          id?: string
+          steps?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "challenge_participants_challenge_id_fkey"
+            columns: ["challenge_id"]
+            isOneToOne: false
+            referencedRelation: "challenges"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      challenges: {
+        Row: {
+          created_at: string | null
+          created_by: string
+          description: string | null
+          end_date: string
+          id: string
+          start_date: string
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          created_by: string
+          description?: string | null
+          end_date: string
+          id?: string
+          start_date: string
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string
+          description?: string | null
+          end_date?: string
+          id?: string
+          start_date?: string
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      feed_posts: {
+        Row: {
+          content: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          image_url: string | null
+          likes: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          image_url?: string | null
+          likes?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      post_comments: {
+        Row: {
+          content: string
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          content: string
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          content?: string
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      post_likes: {
+        Row: {
+          created_at: string | null
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "feed_posts"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_settings: {
         Row: {
@@ -101,7 +278,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      delete_expired_posts: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

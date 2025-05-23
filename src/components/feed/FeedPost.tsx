@@ -1,9 +1,14 @@
+
 import { useState } from 'react';
 import { Heart, MessageSquare, MoreHorizontal } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useAuth } from '@/components/auth/AuthProvider';
+import { useToast } from '@/components/ui/use-toast';
+import { CommentSection } from './CommentSection';
 
 export interface PostProps {
   id: string;
@@ -12,14 +17,25 @@ export interface PostProps {
     username: string;
     avatarUrl?: string;
   };
-  content: string;
+  content?: string;
   imageUrl?: string;
   likes: number;
-  comments: number;
-  createdAt: Date;
+  comments: Array<{
+    id: string;
+    content: string;
+    created_at: string;
+    user: {
+      id: string;
+      username: string;
+      avatarUrl?: string;
+    };
+  }>;
+  createdAt: Date | string;
   hasLiked?: boolean;
   className?: string;
   style?: React.CSSProperties;
+  onLikeToggle?: () => void;
+  onCommentAdded?: () => void;
 }
 
 export function FeedPost({
@@ -27,23 +43,62 @@ export function FeedPost({
   user,
   content,
   imageUrl,
-  likes,
-  comments,
+  likes = 0,
+  comments = [],
   createdAt,
   hasLiked = false,
   className,
   style,
+  onLikeToggle,
+  onCommentAdded
 }: PostProps) {
   const [isLiked, setIsLiked] = useState(hasLiked);
   const [likeCount, setLikeCount] = useState(likes);
+  const [showComments, setShowComments] = useState(false);
+  const { user: currentUser } = useAuth();
+  const { toast } = useToast();
 
-  const handleLike = () => {
-    if (isLiked) {
-      setLikeCount((prev) => prev - 1);
-    } else {
-      setLikeCount((prev) => prev + 1);
+  const handleLike = async () => {
+    if (!currentUser) {
+      toast({
+        title: "Authentication required",
+        description: "Please log in to like posts",
+        variant: "destructive",
+      });
+      return;
     }
-    setIsLiked(!isLiked);
+
+    try {
+      if (isLiked) {
+        // Unlike post
+        await supabase
+          .from('post_likes')
+          .delete()
+          .match({ user_id: currentUser.id, post_id: id });
+        
+        setLikeCount((prev) => prev - 1);
+      } else {
+        // Like post
+        await supabase
+          .from('post_likes')
+          .insert({ user_id: currentUser.id, post_id: id });
+        
+        setLikeCount((prev) => prev + 1);
+      }
+      
+      setIsLiked(!isLiked);
+      if (onLikeToggle) onLikeToggle();
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update like",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCommentAdded = () => {
+    if (onCommentAdded) onCommentAdded();
   };
 
   return (
@@ -60,7 +115,9 @@ export function FeedPost({
           <div>
             <p className="font-medium text-sm">{user.username}</p>
             <p className="text-xs text-muted-foreground">
-              {formatDistanceToNow(createdAt, { addSuffix: true })}
+              {typeof createdAt === 'string' 
+                ? formatDistanceToNow(new Date(createdAt), { addSuffix: true })
+                : formatDistanceToNow(createdAt, { addSuffix: true })}
             </p>
           </div>
         </div>
@@ -69,7 +126,7 @@ export function FeedPost({
         </Button>
       </div>
 
-      <p className="text-sm mb-3 whitespace-pre-line">{content}</p>
+      {content && <p className="text-sm mb-3 whitespace-pre-line">{content}</p>}
 
       {imageUrl && (
         <div className="mb-3 rounded-lg overflow-hidden">
@@ -99,11 +156,20 @@ export function FeedPost({
           variant="ghost"
           size="sm"
           className="flex items-center gap-1 text-muted-foreground"
+          onClick={() => setShowComments(!showComments)}
         >
           <MessageSquare className="h-4 w-4" />
-          <span className="text-xs">{comments}</span>
+          <span className="text-xs">{comments.length}</span>
         </Button>
       </div>
+
+      {showComments && (
+        <CommentSection 
+          postId={id} 
+          comments={comments} 
+          onCommentAdded={handleCommentAdded} 
+        />
+      )}
     </div>
   );
 }

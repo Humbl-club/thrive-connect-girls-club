@@ -85,7 +85,7 @@ export default function Calendar() {
         <div className="container max-w-4xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Calendar</h1>
-            <ViewToggle view={view} onViewChange={setView} />
+            <ViewToggle view={view} setView={setView} />
           </div>
 
           {view === "calendar" ? (

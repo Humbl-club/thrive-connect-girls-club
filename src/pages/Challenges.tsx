@@ -5,7 +5,7 @@ import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
 import { CreateChallenge } from "@/components/challenges/CreateChallenge";
 import { CreateYearRoundChallenge } from "@/components/challenges/CreateYearRoundChallenge";
-import { ChallengeFilters } from "@/components/challenges/ChallengeFilters";
+import { ChallengeFilters, type ChallengeFilters as ChallengeFiltersType } from "@/components/challenges/ChallengeFilters";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -34,7 +34,12 @@ export default function Challenges() {
   const [challenges, setChallenges] = useState<Challenge[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [activeFilter, setActiveFilter] = useState("all");
+  const [filters, setFilters] = useState<ChallengeFiltersType>({
+    status: "all",
+    type: "all",
+    visibility: "all",
+    participation: "all",
+  });
 
   useEffect(() => {
     fetchChallenges();
@@ -168,8 +173,14 @@ export default function Challenges() {
   };
 
   const filteredChallenges = challenges.filter(challenge => {
-    if (activeFilter === "all") return true;
-    return challenge.status === activeFilter;
+    if (filters.status !== "all" && challenge.status !== filters.status) return false;
+    if (filters.type !== "all" && challenge.type !== filters.type) return false;
+    if (filters.visibility !== "all" && challenge.visibility !== filters.visibility) return false;
+    if (filters.participation !== "all") {
+      if (filters.participation === "joined" && !challenge.isJoined) return false;
+      if (filters.participation === "not_joined" && challenge.isJoined) return false;
+    }
+    return true;
   });
 
   return (
@@ -199,8 +210,7 @@ export default function Challenges() {
 
           <div className="mb-6">
             <ChallengeFilters 
-              activeFilter={activeFilter}
-              onFilterChange={setActiveFilter}
+              onFilterChange={setFilters}
             />
           </div>
 
@@ -228,9 +238,9 @@ export default function Challenges() {
                   No challenges found
                 </p>
                 <p className="text-muted-foreground mb-4">
-                  {activeFilter === "all" 
+                  {Object.values(filters).every(f => f === "all")
                     ? "Be the first to create a challenge!"
-                    : `No ${activeFilter} challenges available.`
+                    : "No challenges match your current filters."
                   }
                 </p>
                 <CreateChallenge />

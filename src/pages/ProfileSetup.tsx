@@ -97,8 +97,7 @@ export default function ProfileSetup() {
           bio: values.bio || null,
           location: values.location || null,
           birth_date: values.birthDate || null,
-          instagram_handle: values.instagramHandle,
-          needs_setup: false
+          instagram_handle: values.instagramHandle
         })
         .eq('id', user.id);
 

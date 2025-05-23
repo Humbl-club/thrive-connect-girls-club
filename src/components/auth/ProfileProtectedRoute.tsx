@@ -21,9 +21,8 @@ export function ProfileProtectedRoute({
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if profile setup is needed - now checking for mandatory instagram_handle
+  // Check if profile setup is needed - checking for mandatory fields
   if (requiresProfile && profile && (
-    profile.needs_setup || 
     !profile.full_name || 
     !profile.username || 
     !profile.instagram_handle

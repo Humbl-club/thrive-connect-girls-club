@@ -24,27 +24,12 @@ export function ProfileHeader({
 }: ProfileHeaderProps) {
   const [isHovering, setIsHovering] = useState(false);
 
-  const handleAvatarChange = () => {
-    // This would be connected to a file upload function
-    console.log("Change avatar clicked");
-  };
-
-  const handleBackgroundChange = () => {
-    // This would be connected to a file upload function
-    console.log("Change background clicked");
-  };
-
-  const handleBioEdit = () => {
-    // This would open a modal or form to edit bio
-    console.log("Edit bio clicked");
-  };
-
   return (
     <div className={cn("relative w-full", className)}>
       {/* Background Image */}
       <div 
         className={cn(
-          "w-full h-40 bg-girls-gradient relative overflow-hidden",
+          "w-full h-32 bg-girls-gradient relative overflow-hidden rounded-lg",
           backgroundUrl ? "" : "bg-gradient-to-r from-girls-purple to-girls-pink"
         )}
         onMouseEnter={() => isEditable && setIsHovering(true)}
@@ -57,64 +42,25 @@ export function ProfileHeader({
             className="w-full h-full object-cover"
           />
         )}
-        
-        {isEditable && isHovering && (
-          <Button 
-            variant="secondary" 
-            size="sm" 
-            className="absolute bottom-2 right-2 flex items-center gap-1 opacity-90"
-            onClick={handleBackgroundChange}
-          >
-            <Camera size={14} />
-            <span className="text-xs">Change Cover</span>
-          </Button>
-        )}
       </div>
       
       {/* Avatar */}
-      <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-16">
-        <div className="relative">
-          <Avatar className="w-32 h-32 border-4 border-white girls-shadow">
-            {avatarUrl ? (
-              <AvatarImage src={avatarUrl} alt={username} />
-            ) : (
-              <AvatarFallback className="bg-muted text-4xl">
-                <User size={40} />
-              </AvatarFallback>
-            )}
-          </Avatar>
-          
-          {isEditable && (
-            <Button
-              variant="secondary"
-              size="icon"
-              className="absolute bottom-0 right-0 rounded-full w-8 h-8"
-              onClick={handleAvatarChange}
-            >
-              <Camera size={14} />
-            </Button>
+      <div className="absolute left-4 -bottom-12">
+        <Avatar className="w-24 h-24 border-4 border-white shadow-lg">
+          {avatarUrl ? (
+            <AvatarImage src={avatarUrl} alt={username} />
+          ) : (
+            <AvatarFallback className="bg-muted text-2xl">
+              <User size={32} />
+            </AvatarFallback>
           )}
-        </div>
+        </Avatar>
       </div>
       
       {/* Username and Bio */}
-      <div className="mt-20 text-center px-4">
-        <h1 className="text-2xl font-bold">{username}</h1>
-        
-        <div className="mt-2 relative max-w-md mx-auto">
-          <p className="text-muted-foreground text-sm">{bio}</p>
-          
-          {isEditable && (
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute -right-8 top-0 h-6 w-6"
-              onClick={handleBioEdit}
-            >
-              <Edit size={14} />
-            </Button>
-          )}
-        </div>
+      <div className="mt-16 px-4">
+        <h1 className="text-xl font-bold">{username}</h1>
+        <p className="text-muted-foreground text-sm mt-1">{bio}</p>
       </div>
     </div>
   );

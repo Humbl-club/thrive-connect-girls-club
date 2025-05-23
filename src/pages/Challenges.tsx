@@ -11,6 +11,7 @@ import { RefreshCw, Trophy } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
+import { ChallengeDetails } from "@/components/challenges/ChallengeDetails";
 
 interface Challenge {
   id: string;
@@ -40,12 +41,18 @@ export default function Challenges() {
     visibility: "all",
     participation: "all",
   });
+  const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
+  const [detailsOpen, setDetailsOpen] = useState(false);
 
   useEffect(() => {
-    fetchChallenges();
+    if (user) {
+      fetchChallenges();
+    }
   }, [user]);
 
   const fetchChallenges = async () => {
+    if (!user) return;
+
     try {
       setLoading(true);
       
@@ -56,6 +63,36 @@ export default function Challenges() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
+
+      // Fetch challenge participants
+      const { data: participantsData, error: participantsError } = await supabase
+        .from('challenge_participants')
+        .select('challenge_id, user_id, steps, progress')
+        .eq('user_id', user.id);
+
+      if (participantsError) throw participantsError;
+
+      // Create a map of joined challenges
+      const joinedChallenges = new Map();
+      const progressMap = new Map();
+      
+      participantsData?.forEach(participant => {
+        joinedChallenges.set(participant.challenge_id, true);
+        progressMap.set(participant.challenge_id, participant.progress || participant.steps || 0);
+      });
+
+      // Get participant counts per challenge
+      const participantCounts = new Map();
+      await Promise.all(challengesData.map(async challenge => {
+        const { count, error: countError } = await supabase
+          .from('challenge_participants')
+          .select('*', { count: 'exact', head: true })
+          .eq('challenge_id', challenge.id);
+        
+        if (!countError) {
+          participantCounts.set(challenge.id, count || 0);
+        }
+      }));
 
       // Process challenges and determine status
       const processedChallenges = challengesData.map(challenge => {
@@ -76,15 +113,16 @@ export default function Challenges() {
           id: challenge.id,
           title: challenge.title,
           description: challenge.description || "",
-          goal: 10000, // Default goal, will be updated when we add goal to DB
-          type: "steps" as const, // Default type, will be updated when we add type to DB
+          goal: challenge.goal || 10000,
+          type: (challenge.type as "steps" | "distance" | "active_minutes") || "steps",
           startDate: challenge.start_date,
           endDate: challenge.end_date,
-          visibility: "public" as const,
+          visibility: (challenge.visibility as "public" | "friends" | "private") || "public",
           createdBy: challenge.created_by,
-          participantCount: 0, // Will be updated with actual count
+          participantCount: participantCounts.get(challenge.id) || 0,
+          userProgress: progressMap.get(challenge.id),
           status,
-          isJoined: false // Will be updated with actual status
+          isJoined: joinedChallenges.has(challenge.id)
         };
       });
 
@@ -98,17 +136,17 @@ export default function Challenges() {
       });
     } finally {
       setLoading(false);
+      setRefreshing(false);
     }
   };
 
   const handleRefresh = async () => {
     setRefreshing(true);
     await fetchChallenges();
-    setRefreshing(false);
   };
 
   const handleChallengeCreated = () => {
-    fetchChallenges(); // Refresh the list when a new challenge is created
+    fetchChallenges();
   };
 
   const handleJoinChallenge = async (challengeId: string) => {
@@ -119,7 +157,9 @@ export default function Challenges() {
         .from('challenge_participants')
         .insert({
           challenge_id: challengeId,
-          user_id: user.id
+          user_id: user.id,
+          steps: 0,
+          progress: 0
         });
 
       if (error) throw error;
@@ -174,6 +214,11 @@ export default function Challenges() {
         variant: "destructive"
       });
     }
+  };
+  
+  const handleViewDetails = (challengeId: string) => {
+    setSelectedChallengeId(challengeId);
+    setDetailsOpen(true);
   };
 
   const filteredChallenges = challenges.filter(challenge => {
@@ -231,7 +276,7 @@ export default function Challenges() {
                     challenge={challenge}
                     onJoin={handleJoinChallenge}
                     onLeave={handleLeaveChallenge}
-                    onViewDetails={(id) => console.log("View challenge details:", id)}
+                    onViewDetails={handleViewDetails}
                   />
                 ))}
               </div>
@@ -251,6 +296,14 @@ export default function Challenges() {
               </div>
             )}
           </div>
+          
+          <ChallengeDetails 
+            challengeId={selectedChallengeId}
+            isOpen={detailsOpen}
+            onClose={() => setDetailsOpen(false)}
+            onJoin={handleJoinChallenge}
+            onLeave={handleLeaveChallenge}
+          />
         </div>
       </AppLayout>
     </ProfileProtectedRoute>

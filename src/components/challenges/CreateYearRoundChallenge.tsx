@@ -18,6 +18,7 @@ export function CreateYearRoundChallenge() {
   const [goal, setGoal] = useState("");
   const [challengeType, setChallengeType] = useState<"steps" | "distance" | "active_minutes">("steps");
   const [winnerFrequency, setWinnerFrequency] = useState<"weekly" | "monthly">("weekly");
+  const [visibility, setVisibility] = useState<"public" | "friends" | "private">("public");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -60,7 +61,7 @@ export function CreateYearRoundChallenge() {
           type: challengeType,
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
-          visibility: "public",
+          visibility: visibility,
           created_by: user.id,
           challenge_meta: {
             is_year_round: true,
@@ -82,9 +83,11 @@ export function CreateYearRoundChallenge() {
       setGoal("");
       setChallengeType("steps");
       setWinnerFrequency("weekly");
+      setVisibility("public");
       setIsOpen(false);
       
     } catch (error: any) {
+      console.error("Error creating year-round challenge:", error);
       toast({
         title: "Error",
         description: `Failed to create challenge: ${error.message}`,
@@ -157,6 +160,20 @@ export function CreateYearRoundChallenge() {
               placeholder="Enter goal (e.g., 10000 for steps)"
               disabled={isSubmitting}
             />
+          </div>
+          
+          <div>
+            <Label htmlFor="visibility">Visibility</Label>
+            <Select value={visibility} onValueChange={(value: "public" | "friends" | "private") => setVisibility(value)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Select visibility" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="public">Public</SelectItem>
+                <SelectItem value="friends">Friends Only</SelectItem>
+                <SelectItem value="private">Private (Invite Only)</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           
           <div>

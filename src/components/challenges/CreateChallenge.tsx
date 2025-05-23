@@ -87,7 +87,10 @@ export function CreateChallenge({ onChallengeCreated }: CreateChallengeProps) {
           description: data.description,
           start_date: startDate.toISOString(),
           end_date: endDate.toISOString(),
-          created_by: user.id
+          created_by: user.id,
+          goal: parseInt(data.goal.toString()),
+          type: data.type || 'steps',
+          visibility: data.visibility || 'public'
         });
 
       if (error) throw error;
@@ -107,6 +110,7 @@ export function CreateChallenge({ onChallengeCreated }: CreateChallengeProps) {
       onChallengeCreated?.();
       
     } catch (error: any) {
+      console.error("Error creating challenge:", error);
       toast({
         title: "Error",
         description: `Failed to create challenge: ${error.message}`,
@@ -262,7 +266,7 @@ export function CreateChallenge({ onChallengeCreated }: CreateChallengeProps) {
           <div className="grid gap-2">
             <Label htmlFor="visibility">Who can see this challenge?</Label>
             <Select 
-              defaultValue="friends" 
+              defaultValue="public" 
               disabled={isSubmitting}
               onValueChange={(value) => setValue("visibility", value)}
             >

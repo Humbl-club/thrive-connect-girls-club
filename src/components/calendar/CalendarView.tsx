@@ -40,13 +40,13 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
       <div className="bg-white rounded-xl girls-shadow p-4 mb-6 animate-enter">
         <div className="flex items-center justify-between mb-4">
           <Button variant="outline" size="icon" onClick={goToPreviousMonth}>
-            <ChevronLeft className="h-4 w-4" />
+            <ChevronLeft className="h-4 w-4 text-black" />
           </Button>
-          <h2 className="font-medium">
+          <h2 className="font-medium text-black">
             {date?.toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
           </h2>
           <Button variant="outline" size="icon" onClick={goToNextMonth}>
-            <ChevronRight className="h-4 w-4" />
+            <ChevronRight className="h-4 w-4 text-black" />
           </Button>
         </div>
         
@@ -54,13 +54,14 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
           mode="single"
           selected={date}
           onSelect={setDate}
-          className="rounded-md"
+          className="rounded-md text-black [&_.rdp-head_cell]:text-black [&_.rdp-day]:text-black [&_.rdp-day_today]:text-black [&_.rdp-day_selected]:text-white"
           modifiers={{
             event: eventDates,
           }}
           modifiersStyles={{
             event: {
               fontWeight: "bold",
+              color: "#000000",
             }
           }}
           components={{
@@ -70,7 +71,7 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
               
               return (
                 <div className="relative">
-                  <div>{dayDate.getDate()}</div>
+                  <div className="text-black">{dayDate.getDate()}</div>
                   {hasEvent && (
                     <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 -mb-1">
                       <div className="w-1 h-1 bg-primary rounded-full" />
@@ -85,7 +86,7 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
       
       <div className="animate-enter" style={{ animationDelay: "100ms" }}>
         <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-lg">
+          <h2 className="font-semibold text-lg text-black">
             {date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
           <CreateEventDialog selectedDate={date} onEventCreated={onEventCreated} />
@@ -99,7 +100,7 @@ export function CalendarView({ events, date, setDate, onEventCreated }: Calendar
           </div>
         ) : (
           <div className="bg-white rounded-xl girls-shadow p-8 text-center">
-            <p className="text-muted-foreground">No events scheduled for this day</p>
+            <p className="text-muted-foreground text-black">No events scheduled for this day</p>
           </div>
         )}
       </div>

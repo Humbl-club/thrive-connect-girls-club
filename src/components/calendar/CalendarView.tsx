@@ -1,8 +1,9 @@
 
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { EventCard } from "@/components/calendar/EventCard";
+import { CreateEventDialog } from "@/components/calendar/CreateEventDialog";
 import { CalendarEvent, groupEventsByDate } from "@/data/calendarEvents";
 
 interface CalendarViewProps {
@@ -86,10 +87,7 @@ export function CalendarView({ events, date, setDate }: CalendarViewProps) {
           <h2 className="font-semibold text-lg">
             {date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
-          <Button size="sm" className="flex items-center gap-1">
-            <Plus className="h-3.5 w-3.5" />
-            <span className="text-xs">Add Event</span>
-          </Button>
+          <CreateEventDialog selectedDate={date} />
         </div>
         
         {selectedDateEvents.length > 0 ? (

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, MessageCircle, Share, MoreHorizontal } from "lucide-react";
@@ -170,7 +169,7 @@ export function EnhancedFeedPost({
       </div>
       
       <div className="mt-3">
-        <p className="text-sm">{content}</p>
+        <p className="text-sm text-black whitespace-pre-line">{content}</p>
         {imageUrl && (
           <div className="mt-3 rounded-lg overflow-hidden">
             <img 

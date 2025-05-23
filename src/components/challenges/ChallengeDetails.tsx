@@ -16,13 +16,15 @@ interface ChallengeDetailsProps {
   onLeave?: (challengeId: string) => void;
 }
 
+type ChallengeType = "steps" | "distance" | "active_minutes";
+
 // Mock data - replace with real data fetching
 const mockChallengeDetails = {
   id: "1",
   title: "Spring Step Challenge",
   description: "Let's get moving this spring! Walk 100,000 steps in one week.",
   goal: 100000,
-  type: "steps" as const,
+  type: "steps" as ChallengeType,
   startDate: "2025-05-20",
   endDate: "2025-05-26",
   visibility: "public" as const,
@@ -71,8 +73,8 @@ export function ChallengeDetails({ challengeId, isOpen, onClose, onJoin, onLeave
 
   const progressPercentage = Math.min((challenge.userProgress / challenge.goal) * 100, 100);
 
-  const getTypeIcon = () => {
-    switch (challenge.type) {
+  const getTypeIcon = (type: ChallengeType) => {
+    switch (type) {
       case "steps":
         return "👟";
       case "distance":
@@ -89,7 +91,7 @@ export function ChallengeDetails({ challengeId, isOpen, onClose, onJoin, onLeave
       <DialogContent className="max-w-md mx-auto max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <div className="flex items-center gap-2">
-            <span className="text-xl">{getTypeIcon()}</span>
+            <span className="text-xl">{getTypeIcon(challenge.type)}</span>
             <DialogTitle className="text-xl font-bold">{challenge.title}</DialogTitle>
           </div>
           <DialogDescription>

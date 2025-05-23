@@ -18,10 +18,10 @@ interface Challenge {
   description: string;
   goal: number;
   type: "steps" | "distance" | "active_minutes";
-  start_date: string;
-  end_date: string;
+  startDate: string;
+  endDate: string;
   visibility: "public" | "friends" | "private";
-  created_by: string;
+  createdBy: string;
   participantCount: number;
   userProgress?: number;
   isJoined?: boolean;
@@ -71,12 +71,12 @@ export default function Challenges() {
           id: challenge.id,
           title: challenge.title,
           description: challenge.description || "",
-          goal: challenge.goal || 0,
-          type: challenge.type || "steps",
-          start_date: challenge.start_date,
-          end_date: challenge.end_date,
+          goal: 10000, // Default goal, will be updated when we add goal to DB
+          type: "steps" as const, // Default type, will be updated when we add type to DB
+          startDate: challenge.start_date,
+          endDate: challenge.end_date,
           visibility: "public" as const,
-          created_by: challenge.created_by,
+          createdBy: challenge.created_by,
           participantCount: 0, // Will be updated with actual count
           status,
           isJoined: false // Will be updated with actual status
@@ -193,7 +193,7 @@ export default function Challenges() {
           </div>
 
           <div className="mb-6 flex flex-wrap gap-4">
-            <CreateChallenge onChallengeCreated={fetchChallenges} />
+            <CreateChallenge />
             <CreateYearRoundChallenge />
           </div>
 
@@ -233,7 +233,7 @@ export default function Challenges() {
                     : `No ${activeFilter} challenges available.`
                   }
                 </p>
-                <CreateChallenge onChallengeCreated={fetchChallenges} />
+                <CreateChallenge />
               </div>
             )}
           </div>

@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -47,7 +46,7 @@ export default function ProfileSetup() {
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showCities, setShowCities] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -103,13 +102,19 @@ export default function ProfileSetup() {
 
       if (error) throw error;
 
+      // Refresh the profile in the context to get the updated data
+      await refreshProfile();
+
       toast({
         title: "Profile created!",
         description: "Welcome to the fitness app!",
       });
 
-      // Redirect to dashboard after successful profile setup
-      navigate("/");
+      // Small delay to ensure profile state is updated before redirect
+      setTimeout(() => {
+        navigate("/");
+      }, 100);
+
     } catch (error: any) {
       toast({
         title: "Error",

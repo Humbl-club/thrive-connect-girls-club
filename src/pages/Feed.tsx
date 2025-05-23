@@ -6,12 +6,13 @@ import { FeedPostForm } from "@/components/feed/FeedPostForm";
 import { Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 const Feed = () => {
   const [posts, setPosts] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshKey, setRefreshKey] = useState(0);
   const { user } = useAuth();
+  const { toast } = useToast();
   
   // Fetch posts from Supabase
   useEffect(() => {
@@ -21,13 +22,13 @@ const Feed = () => {
         // Get posts with user profiles
         const { data: postsData, error: postsError } = await supabase
           .from('feed_posts')
-          .select('*')
+          .select('*, profiles:user_id(*)')
           .order('created_at', { ascending: false });
         
         if (postsError) throw postsError;
         
-        // For each post, check if current user has liked it
-        const enhancedPosts = await Promise.all(postsData.map(async (post) => {
+        // For each post, check if current user has liked it and get comments
+        const enhancedPosts = await Promise.all((postsData || []).map(async (post) => {
           // Get like status
           let hasLiked = false;
           if (user) {
@@ -40,10 +41,10 @@ const Feed = () => {
             hasLiked = !!likeData;
           }
           
-          // Get comments
+          // Get comments with user profiles
           const { data: commentsData } = await supabase
             .from('post_comments')
-            .select('*')
+            .select('*, profiles:user_id(*)')
             .eq('post_id', post.id)
             .order('created_at', { ascending: true });
           
@@ -54,21 +55,23 @@ const Feed = () => {
             created_at: comment.created_at,
             user: {
               id: comment.user_id,
-              username: `user_${comment.user_id.substring(0, 6)}`,
-              avatarUrl: null,
+              username: comment.profiles?.username || `user_${comment.user_id.substring(0, 6)}`,
+              avatarUrl: comment.profiles?.avatar_url
             }
           }));
+          
+          const username = post.profiles?.username || `user_${post.user_id.substring(0, 6)}`;
           
           return {
             id: post.id,
             user: {
               id: post.user_id,
-              username: `user_${post.user_id.substring(0, 6)}`,
-              avatarUrl: null,
+              username: username,
+              avatarUrl: post.profiles?.avatar_url
             },
             content: post.content,
             imageUrl: post.image_url,
-            likes: post.likes,
+            likes: post.likes || 0,
             comments,
             createdAt: post.created_at,
             hasLiked,
@@ -78,6 +81,11 @@ const Feed = () => {
         setPosts(enhancedPosts);
       } catch (error) {
         console.error('Error fetching posts:', error);
+        toast({
+          title: "Error",
+          description: "Failed to load posts. Please try again later.",
+          variant: "destructive",
+        });
       } finally {
         setLoading(false);
       }
@@ -86,23 +94,23 @@ const Feed = () => {
     fetchPosts();
     
     // Set up real-time subscription for new posts
-    const postsSubscription = supabase
+    const channel = supabase
       .channel('public:feed_posts')
       .on('postgres_changes', 
         { event: '*', schema: 'public', table: 'feed_posts' }, 
         () => {
-          setRefreshKey(prev => prev + 1);
+          fetchPosts(); // Refetch posts when changes occur
         }
       )
       .subscribe();
     
     return () => {
-      supabase.removeChannel(postsSubscription);
+      supabase.removeChannel(channel);
     };
-  }, [user, refreshKey]);
+  }, [user, toast]);
   
   const handlePostCreated = () => {
-    setRefreshKey(prev => prev + 1);
+    // This will refetch posts after a new post is created
   };
   
   return (

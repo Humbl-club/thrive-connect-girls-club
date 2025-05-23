@@ -1,67 +1,190 @@
 
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
 import { FriendsList } from "@/components/social/FriendsList";
 import { CreateChallenge } from "@/components/challenges/CreateChallenge";
 import { LeaderboardCard } from "@/components/challenges/LeaderboardCard";
 import { FeedPost } from "@/components/feed/FeedPost";
-import { Users, Trophy, MessageSquare } from "lucide-react";
+import { Users, Trophy, MessageSquare, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-
-// Mock leaderboard data
-const mockLeaderboardUsers = [
-  { id: "1", username: "Ashley", avatarUrl: "", steps: 12453, rank: 1 },
-  { id: "2", username: "Madison", avatarUrl: "", steps: 10782, rank: 2 },
-  { id: "3", username: "Jessica", avatarUrl: "", steps: 9356, rank: 3 },
-  { id: "4", username: "Emma", avatarUrl: "", steps: 8142, rank: 4 },
-  { id: "5", username: "Sophia", avatarUrl: "", steps: 7895, rank: 5 },
-  { id: "current", username: "You", avatarUrl: "", steps: 5621, rank: 8 },
-];
-
-// Mock feed data
-const mockPosts = [
-  {
-    id: "1",
-    user: { id: "2", username: "Madison", avatarUrl: "" },
-    content: "Just completed my first 10K run! Thanks to everyone for the encouragement!",
-    imageUrl: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158",
-    likes: 24,
-    comments: [
-      {
-        id: "comment1",
-        content: "Amazing work!",
-        created_at: new Date(2025, 4, 21, 16, 30).toISOString(),
-        user: { id: "3", username: "Emma", avatarUrl: "" }
-      },
-      {
-        id: "comment2",
-        content: "Inspiring!",
-        created_at: new Date(2025, 4, 21, 17, 15).toISOString(),
-        user: { id: "4", username: "Jessica", avatarUrl: "" }
-      }
-    ],
-    createdAt: new Date(2025, 4, 21, 14, 32),
-    hasLiked: true
-  },
-  {
-    id: "2",
-    user: { id: "1", username: "Ashley", avatarUrl: "" },
-    content: "Morning workout done! Starting the day with positive energy. 💪",
-    likes: 18,
-    comments: [
-      {
-        id: "comment3",
-        content: "That's the spirit!",
-        created_at: new Date(2025, 4, 22, 9, 20).toISOString(),
-        user: { id: "5", username: "Sophia", avatarUrl: "" }
-      }
-    ],
-    createdAt: new Date(2025, 4, 22, 8, 15),
-    hasLiked: false
-  }
-];
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/components/ui/use-toast";
 
 const Social = () => {
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [leaderboardUsers, setLeaderboardUsers] = useState<any[]>([]);
+  const [loadingLeaderboard, setLoadingLeaderboard] = useState(true);
+  const { user } = useAuth();
+  const { toast } = useToast();
+
+  // Fetch posts for the feed tab
+  useEffect(() => {
+    const fetchPosts = async () => {
+      if (loading) {
+        try {
+          // Get latest posts with user profiles
+          const { data: postsData, error: postsError } = await supabase
+            .from('feed_posts')
+            .select('*, profiles:user_id(*)')
+            .order('created_at', { ascending: false })
+            .limit(5);
+          
+          if (postsError) throw postsError;
+          
+          // For each post, check if current user has liked it and get comments
+          const enhancedPosts = await Promise.all((postsData || []).map(async (post) => {
+            // Get like status
+            let hasLiked = false;
+            if (user) {
+              const { data: likeData } = await supabase
+                .from('post_likes')
+                .select('id')
+                .match({ user_id: user.id, post_id: post.id })
+                .single();
+              
+              hasLiked = !!likeData;
+            }
+            
+            // Get comments with user profiles
+            const { data: commentsData } = await supabase
+              .from('post_comments')
+              .select('*, profiles:user_id(*)')
+              .eq('post_id', post.id)
+              .order('created_at', { ascending: true });
+            
+            // Format comments for FeedPost component
+            const comments = (commentsData || []).map(comment => ({
+              id: comment.id,
+              content: comment.content,
+              created_at: comment.created_at,
+              user: {
+                id: comment.user_id,
+                username: comment.profiles?.username || `user_${comment.user_id.substring(0, 6)}`,
+                avatarUrl: comment.profiles?.avatar_url
+              }
+            }));
+            
+            return {
+              id: post.id,
+              user: {
+                id: post.user_id,
+                username: post.profiles?.username || `user_${post.user_id.substring(0, 6)}`,
+                avatarUrl: post.profiles?.avatar_url
+              },
+              content: post.content,
+              imageUrl: post.image_url,
+              likes: post.likes || 0,
+              comments,
+              createdAt: post.created_at,
+              hasLiked,
+            };
+          }));
+          
+          setPosts(enhancedPosts);
+        } catch (error) {
+          console.error('Error fetching posts:', error);
+          toast({
+            title: "Error",
+            description: "Failed to load posts. Please try again later.",
+            variant: "destructive",
+          });
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchPosts();
+  }, [user, loading, toast]);
+
+  // Fetch leaderboard data for challenges tab
+  useEffect(() => {
+    const fetchLeaderboardData = async () => {
+      if (loadingLeaderboard) {
+        try {
+          // Find active challenges
+          const { data: challengeData, error: challengeError } = await supabase
+            .from('challenges')
+            .select('*')
+            .gte('end_date', new Date().toISOString())
+            .order('start_date', { ascending: false })
+            .limit(1);
+          
+          if (challengeError) throw challengeError;
+          
+          if (challengeData && challengeData.length > 0) {
+            const activeChallenge = challengeData[0];
+            
+            // Get participants for the active challenge
+            const { data: participantsData, error: participantsError } = await supabase
+              .from('challenge_participants')
+              .select('*, profiles:user_id(*)')
+              .eq('challenge_id', activeChallenge.id)
+              .order('steps', { ascending: false });
+            
+            if (participantsError) throw participantsError;
+            
+            // Format data for the leaderboard component
+            const formattedUsers = (participantsData || []).map((participant, index) => ({
+              id: participant.user_id,
+              username: participant.profiles?.username || `user_${participant.user_id.substring(0, 6)}`,
+              avatarUrl: participant.profiles?.avatar_url,
+              steps: participant.steps || 0,
+              rank: index + 1
+            }));
+            
+            // If current user is in the challenge, find their entry
+            let currentUserEntry = null;
+            if (user) {
+              const userParticipant = participantsData?.find(p => p.user_id === user.id);
+              if (userParticipant) {
+                const userRank = participantsData?.findIndex(p => p.user_id === user.id) + 1;
+                currentUserEntry = {
+                  id: user.id,
+                  username: "You",
+                  avatarUrl: "",
+                  steps: userParticipant.steps || 0,
+                  rank: userRank
+                };
+                
+                // If user is not in top 5, add them at the end
+                if (userRank > 5) {
+                  formattedUsers.push(currentUserEntry);
+                }
+              }
+            }
+            
+            setLeaderboardUsers(formattedUsers.slice(0, 5));
+          } else {
+            // No active challenges, use dummy data
+            setLeaderboardUsers([
+              { id: "1", username: "Ashley", avatarUrl: "", steps: 12453, rank: 1 },
+              { id: "2", username: "Madison", avatarUrl: "", steps: 10782, rank: 2 },
+              { id: "3", username: "Jessica", avatarUrl: "", steps: 9356, rank: 3 }
+            ]);
+          }
+        } catch (error) {
+          console.error('Error fetching leaderboard data:', error);
+        } finally {
+          setLoadingLeaderboard(false);
+        }
+      }
+    };
+    
+    fetchLeaderboardData();
+  }, [user, loadingLeaderboard, toast]);
+
+  const handleLoadMore = () => {
+    // Implement load more functionality if needed
+    toast({
+      title: "Coming soon",
+      description: "Load more functionality is under development",
+    });
+  };
+  
   return (
     <AppLayout>
       <div className="container px-4 py-6 pb-20 max-w-md mx-auto">
@@ -80,13 +203,26 @@ const Social = () => {
           </TabsList>
           
           <TabsContent value="feed" className="space-y-6 animate-enter">
-            <div className="space-y-4">
-              {mockPosts.map(post => (
-                <FeedPost key={post.id} {...post} />
-              ))}
-              
-              <Button variant="outline" className="w-full">Load More</Button>
-            </div>
+            {loading ? (
+              <div className="flex flex-col items-center justify-center py-10">
+                <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+                <p className="text-muted-foreground">Loading posts...</p>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="text-center py-10">
+                <p className="text-muted-foreground">No posts yet.</p>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {posts.map(post => (
+                  <FeedPost key={post.id} {...post} />
+                ))}
+                
+                <Button variant="outline" className="w-full" onClick={handleLoadMore}>
+                  Load More
+                </Button>
+              </div>
+            )}
           </TabsContent>
           
           <TabsContent value="friends" className="animate-enter">
@@ -99,23 +235,22 @@ const Social = () => {
                 <Trophy className="h-5 w-5 mr-2 text-primary" /> Active Challenges
               </h2>
               
-              <div className="space-y-4">
-                <LeaderboardCard
-                  title="Spring Step Challenge"
-                  description="May 20-26"
-                  timeframe="weekly"
-                  users={mockLeaderboardUsers}
-                  currentUserId="current"
-                />
-                
-                <LeaderboardCard
-                  title="May Marathon"
-                  description="May 1-31"
-                  timeframe="monthly"
-                  users={mockLeaderboardUsers.slice(0, 3).concat(mockLeaderboardUsers[5])}
-                  currentUserId="current"
-                />
-              </div>
+              {loadingLeaderboard ? (
+                <div className="flex flex-col items-center justify-center py-10">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
+                  <p className="text-muted-foreground">Loading challenges...</p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <LeaderboardCard
+                    title="Spring Step Challenge"
+                    description="May 20-26"
+                    timeframe="weekly"
+                    users={leaderboardUsers}
+                    currentUserId={user?.id}
+                  />
+                </div>
+              )}
             </div>
             
             <div className="pt-4">

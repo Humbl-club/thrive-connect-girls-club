@@ -13,37 +13,60 @@ export function ProfileProtectedRoute({
   requiresProfile = true 
 }: ProfileProtectedRouteProps) {
   const { user, profile, loading } = useAuth();
-  const [profileChecked, setProfileChecked] = useState(false);
+  const [isReady, setIsReady] = useState(false);
   
   useEffect(() => {
-    // Only mark profile as checked after we have both user and profile data
-    if (!loading && user && profile) {
-      console.log("Profile data:", profile);
-      setProfileChecked(true);
+    // Wait for auth to finish loading
+    if (!loading) {
+      console.log("Auth loading finished. User:", !!user, "Profile:", !!profile);
+      if (user) {
+        console.log("Profile data:", profile);
+        // Give a small delay to ensure profile data is fully loaded
+        setTimeout(() => {
+          setIsReady(true);
+        }, 100);
+      } else {
+        setIsReady(true);
+      }
     }
   }, [loading, user, profile]);
   
-  if (loading || !profileChecked) {
-    console.log("Still loading or checking profile...");
+  // Show loading while auth is initializing or we're waiting for profile data
+  if (loading || !isReady) {
+    console.log("Still loading - auth loading:", loading, "isReady:", isReady);
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
   
+  // Redirect to auth if no user
   if (!user) {
     console.log("No user, redirecting to auth");
     return <Navigate to="/auth" replace />;
   }
 
-  // Check if profile setup is needed - checking for mandatory fields
-  const needsProfileSetup = requiresProfile && profile && (
-    !profile.full_name || 
-    !profile.username || 
-    !profile.instagram_handle
-  );
+  // Check if profile setup is needed only if we require a profile
+  if (requiresProfile && profile) {
+    const needsProfileSetup = (
+      !profile.full_name || 
+      !profile.username || 
+      !profile.instagram_handle
+    );
 
-  console.log("Needs profile setup:", needsProfileSetup);
+    console.log("Profile check - needs setup:", needsProfileSetup);
+    console.log("Profile fields:", {
+      full_name: profile.full_name,
+      username: profile.username,
+      instagram_handle: profile.instagram_handle
+    });
+    
+    if (needsProfileSetup) {
+      console.log("Redirecting to profile setup");
+      return <Navigate to="/profile-setup" replace />;
+    }
+  }
   
-  if (needsProfileSetup) {
-    console.log("Redirecting to profile setup");
+  // If we require a profile but don't have one yet, redirect to setup
+  if (requiresProfile && !profile) {
+    console.log("No profile found, redirecting to profile setup");
     return <Navigate to="/profile-setup" replace />;
   }
   

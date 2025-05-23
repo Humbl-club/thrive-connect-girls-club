@@ -42,6 +42,11 @@ const App = () => (
                       <ProfileSetup />
                     </ProtectedRoute>
                   } />
+                  <Route path="/feed" element={
+                    <ProfileProtectedRoute>
+                      <Feed />
+                    </ProfileProtectedRoute>
+                  } />
                   <Route path="/" element={
                     <ProfileProtectedRoute>
                       <Index />
@@ -55,11 +60,6 @@ const App = () => (
                   <Route path="/challenges" element={
                     <ProfileProtectedRoute>
                       <Challenges />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/feed" element={
-                    <ProfileProtectedRoute>
-                      <Feed />
                     </ProfileProtectedRoute>
                   } />
                   <Route path="/calendar" element={

@@ -16,16 +16,20 @@ export function ProfileProtectedRoute({
   const [profileChecked, setProfileChecked] = useState(false);
   
   useEffect(() => {
-    if (!loading && user) {
+    // Only mark profile as checked after we have both user and profile data
+    if (!loading && user && profile) {
+      console.log("Profile data:", profile);
       setProfileChecked(true);
     }
   }, [loading, user, profile]);
   
   if (loading || !profileChecked) {
+    console.log("Still loading or checking profile...");
     return <div className="flex h-screen items-center justify-center">Loading...</div>;
   }
   
   if (!user) {
+    console.log("No user, redirecting to auth");
     return <Navigate to="/auth" replace />;
   }
 
@@ -36,9 +40,13 @@ export function ProfileProtectedRoute({
     !profile.instagram_handle
   );
 
+  console.log("Needs profile setup:", needsProfileSetup);
+  
   if (needsProfileSetup) {
+    console.log("Redirecting to profile setup");
     return <Navigate to="/profile-setup" replace />;
   }
   
+  console.log("Profile check passed, rendering children");
   return <>{children}</>;
 }

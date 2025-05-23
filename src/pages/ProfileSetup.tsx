@@ -110,8 +110,12 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      // Force navigation to dashboard
-      window.location.href = "/";
+      // Allow the toast to be displayed briefly, then force redirect
+      setTimeout(() => {
+        console.log("Redirecting to dashboard...");
+        // Force a complete page reload and navigation
+        window.location.replace("/");
+      }, 800);
 
     } catch (error: any) {
       toast({

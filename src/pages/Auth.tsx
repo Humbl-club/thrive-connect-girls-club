@@ -50,8 +50,8 @@ export default function Auth() {
         description: "Check your email to confirm your account.",
       });
       
-      // Redirect to dashboard after successful sign up
-      navigate("/");
+      // Force a full page reload to ensure proper redirection
+      window.location.href = "/";
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,8 +89,8 @@ export default function Auth() {
         description: "You've been successfully logged in.",
       });
       
-      // Redirect to dashboard after successful sign in
-      navigate("/");
+      // Force a full page reload to ensure proper redirection
+      window.location.href = "/";
     } catch (error: any) {
       toast({
         title: "Error",

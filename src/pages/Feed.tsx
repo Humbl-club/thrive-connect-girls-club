@@ -9,6 +9,7 @@ import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
 import { Button } from "@/components/ui/button";
 import { RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { StepWidgetSmall } from "@/components/step-counter/StepWidgetSmall";
 
 type Post = {
   id: string;
@@ -115,6 +116,11 @@ export default function Feed() {
               <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
               Refresh
             </Button>
+          </div>
+          
+          {/* Step Counter Widget */}
+          <div className="mb-6">
+            <StepWidgetSmall />
           </div>
 
           <div className="mb-6">

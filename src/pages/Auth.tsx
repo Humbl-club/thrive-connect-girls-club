@@ -50,6 +50,7 @@ export default function Auth() {
         description: "Check your email to confirm your account.",
       });
       
+      // Redirect to dashboard after successful sign up
       navigate("/");
     } catch (error: any) {
       toast({
@@ -88,6 +89,7 @@ export default function Auth() {
         description: "You've been successfully logged in.",
       });
       
+      // Redirect to dashboard after successful sign in
       navigate("/");
     } catch (error: any) {
       toast({

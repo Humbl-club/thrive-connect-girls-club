@@ -108,6 +108,7 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
+      // Redirect to dashboard after successful profile setup
       navigate("/");
     } catch (error: any) {
       toast({

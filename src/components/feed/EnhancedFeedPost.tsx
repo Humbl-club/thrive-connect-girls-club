@@ -5,7 +5,7 @@ import { Heart, MessageCircle, Share, MoreHorizontal } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CommentSection } from "./CommentSection";
+import { EnhancedCommentSection } from "./EnhancedCommentSection";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -217,7 +217,7 @@ export function EnhancedFeedPost({
       
       {showComments && (
         <div className="mt-4">
-          <CommentSection postId={id} />
+          <EnhancedCommentSection postId={id} />
         </div>
       )}
     </div>

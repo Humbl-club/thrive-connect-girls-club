@@ -9,6 +9,7 @@ import { SettingsProvider } from "@/hooks/use-settings";
 import { AnalyticsProvider } from "@/hooks/use-analytics";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
+import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
 
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
@@ -19,6 +20,7 @@ import Settings from "./pages/Settings";
 import Analytics from "./pages/Analytics";
 import Social from "./pages/Social";
 import Auth from "./pages/Auth";
+import ProfileSetup from "./pages/ProfileSetup";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -35,45 +37,50 @@ const App = () => (
               <BrowserRouter>
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/" element={
+                  <Route path="/profile-setup" element={
                     <ProtectedRoute>
-                      <Index />
+                      <ProfileSetup />
                     </ProtectedRoute>
+                  } />
+                  <Route path="/" element={
+                    <ProfileProtectedRoute>
+                      <Index />
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/profile" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Profile />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/challenges" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Challenges />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/feed" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Feed />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/calendar" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Calendar />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/settings" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Settings />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/analytics" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Analytics />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="/social" element={
-                    <ProtectedRoute>
+                    <ProfileProtectedRoute>
                       <Social />
-                    </ProtectedRoute>
+                    </ProfileProtectedRoute>
                   } />
                   <Route path="*" element={<NotFound />} />
                 </Routes>

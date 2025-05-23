@@ -28,7 +28,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         if (session?.user) {
           setTimeout(() => {
-            createUserProfile(session.user);
+            fetchUserProfile(session.user);
           }, 0);
         } else {
           setProfile(null);
@@ -42,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       
       if (session?.user) {
-        createUserProfile(session.user);
+        fetchUserProfile(session.user);
       }
       
       setLoading(false);
@@ -51,19 +51,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const createUserProfile = (user: User) => {
+  const fetchUserProfile = async (user: User) => {
     try {
-      // Since we don't have a profiles table yet, create a profile object from user data
+      const { data: profile, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', user.id)
+        .single();
+
+      if (error && error.code !== 'PGRST116') {
+        throw error;
+      }
+
+      if (profile) {
+        setProfile(profile);
+      } else {
+        // Create a basic profile if none exists
+        const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
+        
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            id: user.id,
+            username,
+            full_name: user.user_metadata?.full_name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+          })
+          .select()
+          .single();
+
+        if (insertError) {
+          console.error('Error creating profile:', insertError);
+          setProfile({
+            id: user.id,
+            username,
+            full_name: user.user_metadata?.full_name || null,
+            avatar_url: user.user_metadata?.avatar_url || null,
+            needs_setup: true,
+          });
+        } else {
+          setProfile({ ...newProfile, needs_setup: true });
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      // Create a fallback profile
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
-      
       setProfile({
         id: user.id,
         username,
         full_name: user.user_metadata?.full_name || null,
         avatar_url: user.user_metadata?.avatar_url || null,
+        needs_setup: true,
       });
-    } catch (error) {
-      console.error('Error creating user profile:', error);
     }
   };
 

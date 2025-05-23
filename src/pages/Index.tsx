@@ -12,12 +12,13 @@ import { useSettings } from "@/hooks/use-settings";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/components/ui/use-toast";
+import { useStepTracking } from "@/hooks/use-step-tracking";
 
 const Index = () => {
   const { settings } = useSettings();
   const { user } = useAuth();
   const { toast } = useToast();
-  const [currentSteps, setCurrentSteps] = useState(5621);
+  const { currentSteps } = useStepTracking();
   const [leaderboardUsers, setLeaderboardUsers] = useState<any[]>([]);
   const [upcomingEvents, setUpcomingEvents] = useState<any[]>([]);
   const [recentPosts, setRecentPosts] = useState<any[]>([]);
@@ -26,11 +27,6 @@ const Index = () => {
     events: true,
     posts: true
   });
-  
-  // Simulate step update for demo purposes
-  const updateSteps = () => {
-    setCurrentSteps(prev => Math.min(prev + Math.floor(Math.random() * 500) + 100, settings.dailyStepGoal));
-  };
   
   // Fetch leaderboard data
   useEffect(() => {
@@ -107,7 +103,7 @@ const Index = () => {
     };
     
     fetchLeaderboardData();
-  }, [user, currentSteps]);
+  }, [user]);
   
   // Fetch upcoming events
   useEffect(() => {
@@ -288,26 +284,35 @@ const Index = () => {
             </Link>
           </div>
           
-          <div className="flex justify-center mb-2" onClick={updateSteps}>
+          <div className="flex justify-center mb-2">
             <StepCounter currentSteps={currentSteps} goalSteps={settings.dailyStepGoal} size="lg" />
           </div>
           
           <div className="text-center">
             <p className="text-sm text-muted-foreground mb-4">
-              {settings.dailyStepGoal - currentSteps} steps to reach your daily goal
+              {settings.dailyStepGoal - currentSteps > 0 
+                ? `${settings.dailyStepGoal - currentSteps} steps to reach your daily goal`
+                : "🎉 Daily goal achieved!"
+              }
             </p>
             
             <div className="grid grid-cols-3 gap-4">
               <div className="rounded-lg bg-gray-50 p-2 flex flex-col items-center">
-                <span className="text-lg font-semibold text-primary">3.2</span>
+                <span className="text-lg font-semibold text-primary">
+                  {(currentSteps * 0.0008).toFixed(1)}
+                </span>
                 <span className="text-xs text-muted-foreground">miles</span>
               </div>
               <div className="rounded-lg bg-gray-50 p-2 flex flex-col items-center">
-                <span className="text-lg font-semibold text-primary">284</span>
+                <span className="text-lg font-semibold text-primary">
+                  {Math.floor(currentSteps * 0.04)}
+                </span>
                 <span className="text-xs text-muted-foreground">calories</span>
               </div>
               <div className="rounded-lg bg-gray-50 p-2 flex flex-col items-center">
-                <span className="text-lg font-semibold text-primary">42</span>
+                <span className="text-lg font-semibold text-primary">
+                  {Math.floor(currentSteps / 100)}
+                </span>
                 <span className="text-xs text-muted-foreground">mins</span>
               </div>
             </div>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
@@ -32,6 +33,8 @@ import { format } from "date-fns";
 import { toast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
 import { CalendarIcon, Plus, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 
 interface ChallengeFormData {
   title: string;
@@ -43,14 +46,29 @@ interface ChallengeFormData {
   visibility: string;
 }
 
-export function CreateChallenge() {
+interface CreateChallengeProps {
+  onChallengeCreated?: () => void;
+}
+
+export function CreateChallenge({ onChallengeCreated }: CreateChallengeProps) {
   const [open, setOpen] = useState(false);
   const [startDate, setStartDate] = useState<Date>();
   const [endDate, setEndDate] = useState<Date>();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { user } = useAuth();
   
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<ChallengeFormData>();
+  const { register, handleSubmit, formState: { errors }, reset, setValue } = useForm<ChallengeFormData>();
   
-  const onSubmit = (data: ChallengeFormData) => {
+  const onSubmit = async (data: ChallengeFormData) => {
+    if (!user) {
+      toast({
+        title: "Authentication required",
+        description: "You need to be logged in to create challenges",
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!startDate || !endDate) {
       toast({
         description: "Please select both start and end dates",
@@ -58,24 +76,45 @@ export function CreateChallenge() {
       });
       return;
     }
+
+    setIsSubmitting(true);
     
-    // Submit challenge data
-    console.log({
-      ...data,
-      startDate,
-      endDate,
-    });
-    
-    toast({
-      title: "Challenge Created!",
-      description: "Your new challenge has been created successfully.",
-    });
-    
-    // Reset form and close dialog
-    reset();
-    setStartDate(undefined);
-    setEndDate(undefined);
-    setOpen(false);
+    try {
+      const { error } = await supabase
+        .from('challenges')
+        .insert({
+          title: data.title,
+          description: data.description,
+          start_date: startDate.toISOString(),
+          end_date: endDate.toISOString(),
+          created_by: user.id
+        });
+
+      if (error) throw error;
+      
+      toast({
+        title: "Challenge Created!",
+        description: "Your new challenge has been created successfully.",
+      });
+      
+      // Reset form and close dialog
+      reset();
+      setStartDate(undefined);
+      setEndDate(undefined);
+      setOpen(false);
+      
+      // Notify parent component to refresh
+      onChallengeCreated?.();
+      
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: `Failed to create challenge: ${error.message}`,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -102,6 +141,7 @@ export function CreateChallenge() {
             <Input 
               id="title"
               placeholder="e.g., Summer Step Challenge"
+              disabled={isSubmitting}
               {...register("title", { required: "Title is required" })}
             />
             {errors.title && (
@@ -114,6 +154,7 @@ export function CreateChallenge() {
             <Textarea 
               id="description"
               placeholder="Describe your challenge..."
+              disabled={isSubmitting}
               {...register("description")}
             />
           </div>
@@ -125,6 +166,7 @@ export function CreateChallenge() {
                 id="goal"
                 type="number"
                 placeholder="e.g., 10000"
+                disabled={isSubmitting}
                 {...register("goal", { 
                   required: "Goal is required",
                   min: { value: 1000, message: "Minimum goal is 1,000" }
@@ -137,7 +179,11 @@ export function CreateChallenge() {
             
             <div className="grid gap-2">
               <Label htmlFor="type">Type</Label>
-              <Select defaultValue="steps" onValueChange={(value) => register("type").onChange({ target: { value } })}>
+              <Select 
+                defaultValue="steps" 
+                disabled={isSubmitting}
+                onValueChange={(value) => setValue("type", value)}
+              >
                 <SelectTrigger>
                   <SelectValue placeholder="Select type" />
                 </SelectTrigger>
@@ -160,6 +206,7 @@ export function CreateChallenge() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    disabled={isSubmitting}
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !startDate && "text-muted-foreground"
@@ -186,6 +233,7 @@ export function CreateChallenge() {
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
+                    disabled={isSubmitting}
                     className={cn(
                       "w-full justify-start text-left font-normal",
                       !endDate && "text-muted-foreground"
@@ -213,7 +261,11 @@ export function CreateChallenge() {
           
           <div className="grid gap-2">
             <Label htmlFor="visibility">Who can see this challenge?</Label>
-            <Select defaultValue="friends" onValueChange={(value) => register("visibility").onChange({ target: { value } })}>
+            <Select 
+              defaultValue="friends" 
+              disabled={isSubmitting}
+              onValueChange={(value) => setValue("visibility", value)}
+            >
               <SelectTrigger>
                 <SelectValue placeholder="Select visibility" />
               </SelectTrigger>
@@ -229,7 +281,13 @@ export function CreateChallenge() {
           </div>
 
           <DialogFooter className="pt-4">
-            <Button type="submit" className="w-full">Create Challenge</Button>
+            <Button 
+              type="submit" 
+              className="w-full"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? "Creating..." : "Create Challenge"}
+            </Button>
           </DialogFooter>
         </form>
       </DialogContent>

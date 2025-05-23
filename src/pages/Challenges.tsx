@@ -107,6 +107,10 @@ export default function Challenges() {
     setRefreshing(false);
   };
 
+  const handleChallengeCreated = () => {
+    fetchChallenges(); // Refresh the list when a new challenge is created
+  };
+
   const handleJoinChallenge = async (challengeId: string) => {
     if (!user) return;
     
@@ -204,7 +208,7 @@ export default function Challenges() {
           </div>
 
           <div className="mb-6 flex flex-wrap gap-4">
-            <CreateChallenge />
+            <CreateChallenge onChallengeCreated={handleChallengeCreated} />
             <CreateYearRoundChallenge />
           </div>
 
@@ -243,7 +247,7 @@ export default function Challenges() {
                     : "No challenges match your current filters."
                   }
                 </p>
-                <CreateChallenge />
+                <CreateChallenge onChallengeCreated={handleChallengeCreated} />
               </div>
             )}
           </div>

@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowLeft, User, Key, Moon, Sun, Check, X } from "lucide-react";
@@ -13,7 +14,7 @@ import { useSettings } from "@/hooks/use-settings";
 import { FitnessTrackingSettings } from "@/components/fitness/FitnessTrackingSettings";
 
 const Settings = () => {
-  const { settings, updateSetting } = useSettings();
+  const { settings, updateSettings } = useSettings();
   const [name, setName] = useState("Ashley Simpson");
   const [email, setEmail] = useState("ashleysimpson@example.com");
   const [password, setPassword] = useState("");
@@ -104,31 +105,31 @@ const Settings = () => {
                     defaultValue={[settings.dailyStepGoal]}
                     max={20000}
                     step={1000}
-                    onValueChange={(value) => updateSetting("dailyStepGoal", value[0])}
+                    onValueChange={(value) => updateSettings({ dailyStepGoal: value[0] })}
                   />
                   <Input
                     type="number"
                     value={settings.dailyStepGoal}
                     className="w-20"
-                    onChange={(e) => updateSetting("dailyStepGoal", parseInt(e.target.value))}
+                    onChange={(e) => updateSettings({ dailyStepGoal: parseInt(e.target.value) })}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="water">Daily Water Goal (liters)</Label>
+                <Label htmlFor="weekly">Weekly Step Goal</Label>
                 <div className="flex items-center gap-4">
                   <Slider
-                    id="water"
-                    defaultValue={[settings.dailyWaterGoal]}
-                    max={8}
-                    step={0.5}
-                    onValueChange={(value) => updateSetting("dailyWaterGoal", value[0])}
+                    id="weekly"
+                    defaultValue={[settings.weeklyStepGoal]}
+                    max={150000}
+                    step={5000}
+                    onValueChange={(value) => updateSettings({ weeklyStepGoal: value[0] })}
                   />
                   <Input
                     type="number"
-                    value={settings.dailyWaterGoal}
-                    className="w-20"
-                    onChange={(e) => updateSetting("dailyWaterGoal", parseFloat(e.target.value))}
+                    value={settings.weeklyStepGoal}
+                    className="w-24"
+                    onChange={(e) => updateSettings({ weeklyStepGoal: parseInt(e.target.value) })}
                   />
                 </div>
               </div>
@@ -143,23 +144,41 @@ const Settings = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex justify-between items-center">
-                <Label htmlFor="theme">Dark Mode</Label>
+                <Label htmlFor="notifications">Notifications</Label>
                 <Switch
-                  id="theme"
-                  checked={settings.theme === "dark"}
-                  onCheckedChange={(checked) => updateSetting("theme", checked ? "dark" : "light")}
+                  id="notifications"
+                  checked={settings.notificationsEnabled}
+                  onCheckedChange={(checked) => updateSettings({ notificationsEnabled: checked })}
                 />
               </div>
               <div>
-                <Label htmlFor="language">Language</Label>
-                <Select defaultValue={settings.language} onValueChange={(value) => updateSetting("language", value)}>
+                <Label htmlFor="units">Unit System</Label>
+                <Select 
+                  defaultValue={settings.unitSystem} 
+                  onValueChange={(value: "imperial" | "metric") => updateSettings({ unitSystem: value })}
+                >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a language" />
+                    <SelectValue placeholder="Select unit system" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="en">English</SelectItem>
-                    <SelectItem value="es">Spanish</SelectItem>
-                    <SelectItem value="fr">French</SelectItem>
+                    <SelectItem value="imperial">Imperial (miles, pounds)</SelectItem>
+                    <SelectItem value="metric">Metric (kilometers, kilograms)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label htmlFor="privacy">Privacy Level</Label>
+                <Select 
+                  defaultValue={settings.privacyLevel} 
+                  onValueChange={(value: "public" | "friends" | "private") => updateSettings({ privacyLevel: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select privacy level" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="public">Public</SelectItem>
+                    <SelectItem value="friends">Friends Only</SelectItem>
+                    <SelectItem value="private">Private</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

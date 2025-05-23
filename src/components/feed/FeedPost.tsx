@@ -7,7 +7,7 @@ import { formatDistanceToNow } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { CommentSection } from './CommentSection';
 
 export interface PostProps {
@@ -113,7 +113,7 @@ export function FeedPost({
             )}
           </Avatar>
           <div>
-            <p className="font-medium text-sm">{user.username}</p>
+            <p className="font-medium text-sm text-black">{user.username}</p>
             <p className="text-xs text-muted-foreground">
               {typeof createdAt === 'string' 
                 ? formatDistanceToNow(new Date(createdAt), { addSuffix: true })
@@ -126,7 +126,7 @@ export function FeedPost({
         </Button>
       </div>
 
-      {content && <p className="text-sm mb-3 whitespace-pre-line">{content}</p>}
+      {content && <p className="text-sm text-black mb-3 whitespace-pre-line">{content}</p>}
 
       {imageUrl && (
         <div className="mb-3 rounded-lg overflow-hidden">
@@ -149,7 +149,7 @@ export function FeedPost({
           onClick={handleLike}
         >
           <Heart className={cn("h-4 w-4", isLiked && "fill-rose-500")} />
-          <span className="text-xs">{likeCount}</span>
+          <span className="text-xs text-black">{likeCount}</span>
         </Button>
 
         <Button
@@ -159,7 +159,7 @@ export function FeedPost({
           onClick={() => setShowComments(!showComments)}
         >
           <MessageSquare className="h-4 w-4" />
-          <span className="text-xs">{comments.length}</span>
+          <span className="text-xs text-black">{comments.length}</span>
         </Button>
       </div>
 

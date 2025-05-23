@@ -145,7 +145,7 @@ export function EnhancedFeedPost({
             )}
           </Avatar>
           <div>
-            <h3 className="font-semibold">{username}</h3>
+            <h3 className="font-semibold text-black">{username}</h3>
             <p className="text-xs text-muted-foreground">
               {formatDistanceToNow(new Date(createdAt), { addSuffix: true })}
             </p>
@@ -191,7 +191,7 @@ export function EnhancedFeedPost({
           disabled={isLoading}
         >
           <Heart className={`h-4 w-4 ${isLiked ? 'fill-red-500 text-red-500' : ''}`} />
-          <span>{likeCount}</span>
+          <span className="text-black">{likeCount}</span>
         </Button>
         
         <Button 
@@ -201,7 +201,7 @@ export function EnhancedFeedPost({
           onClick={toggleComments}
         >
           <MessageCircle className="h-4 w-4" />
-          <span>Comment</span>
+          <span className="text-black">Comment</span>
         </Button>
         
         <Button 
@@ -210,7 +210,7 @@ export function EnhancedFeedPost({
           className="flex items-center gap-1"
         >
           <Share className="h-4 w-4" />
-          <span>Share</span>
+          <span className="text-black">Share</span>
         </Button>
       </div>
       

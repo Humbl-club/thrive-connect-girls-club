@@ -1,331 +1,244 @@
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
-import { LeaderboardCard } from "@/components/challenges/LeaderboardCard";
-import { CreateChallenge } from "@/components/challenges/CreateChallenge";
+import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
 import { ChallengeCard } from "@/components/challenges/ChallengeCard";
-import { ChallengeDetails } from "@/components/challenges/ChallengeDetails";
-import { ChallengeFilters, type ChallengeFilters as ChallengeFiltersType } from "@/components/challenges/ChallengeFilters";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CreateChallenge } from "@/components/challenges/CreateChallenge";
+import { CreateYearRoundChallenge } from "@/components/challenges/CreateYearRoundChallenge";
+import { ChallengeFilters } from "@/components/challenges/ChallengeFilters";
 import { Button } from "@/components/ui/button";
-import { StepCounter } from "@/components/ui/step-counter";
-import { Trophy, Calendar, Plus } from "lucide-react";
-import { useToast } from "@/components/ui/use-toast";
+import { RefreshCw, Trophy } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
+import { useToast } from "@/hooks/use-toast";
 
-// Mock data for challenges
-const mockChallenges = [
-  {
-    id: "1",
-    title: "Spring Step Challenge",
-    description: "Let's get moving this spring! Walk 100,000 steps in one week.",
-    goal: 100000,
-    type: "steps" as const,
-    startDate: "2025-05-20",
-    endDate: "2025-05-26",
-    visibility: "public" as const,
-    createdBy: "Ashley",
-    participantCount: 24,
-    userProgress: 65420,
-    isJoined: true,
-    status: "active" as const,
-  },
-  {
-    id: "2",
-    title: "Summer Solstice Challenge",
-    description: "Celebrate the longest day with 21,000 steps on June 21st!",
-    goal: 21000,
-    type: "steps" as const,
-    startDate: "2025-06-20",
-    endDate: "2025-06-26",
-    visibility: "public" as const,
-    createdBy: "Madison",
-    participantCount: 16,
-    isJoined: false,
-    status: "upcoming" as const,
-  },
-  {
-    id: "3",
-    title: "Weekend Warriors",
-    description: "Get active this weekend with friends!",
-    goal: 180,
-    type: "active_minutes" as const,
-    startDate: "2025-05-24",
-    endDate: "2025-05-25",
-    visibility: "friends" as const,
-    createdBy: "Jessica",
-    participantCount: 8,
-    userProgress: 95,
-    isJoined: true,
-    status: "active" as const,
-  },
-  {
-    id: "4",
-    title: "May Marathon",
-    description: "Complete the equivalent of a marathon distance this month.",
-    goal: 42195,
-    type: "distance" as const,
-    startDate: "2025-05-01",
-    endDate: "2025-05-31",
-    visibility: "public" as const,
-    createdBy: "Emma",
-    participantCount: 45,
-    userProgress: 32000,
-    isJoined: true,
-    status: "active" as const,
-  },
-];
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  goal: number;
+  type: "steps" | "distance" | "active_minutes";
+  start_date: string;
+  end_date: string;
+  visibility: "public" | "friends" | "private";
+  created_by: string;
+  participantCount: number;
+  userProgress?: number;
+  isJoined?: boolean;
+  status: "upcoming" | "active" | "completed";
+}
 
-const mockDailyLeaderboard = [
-  { id: "1", username: "Ashley", avatarUrl: "", steps: 12453, rank: 1 },
-  { id: "2", username: "Madison", avatarUrl: "", steps: 10782, rank: 2 },
-  { id: "3", username: "Jessica", avatarUrl: "", steps: 9356, rank: 3 },
-  { id: "4", username: "Emma", avatarUrl: "", steps: 8142, rank: 4 },
-  { id: "5", username: "Sophia", avatarUrl: "", steps: 7895, rank: 5 },
-  { id: "current", username: "You", avatarUrl: "", steps: 5621, rank: 8 },
-];
-
-const Challenges = () => {
-  const [currentSteps, setCurrentSteps] = useState(5621);
-  const [challenges, setChallenges] = useState(mockChallenges);
-  const [filteredChallenges, setFilteredChallenges] = useState(mockChallenges);
-  const [selectedChallengeId, setSelectedChallengeId] = useState<string | null>(null);
+export default function Challenges() {
+  const { user } = useAuth();
   const { toast } = useToast();
+  const [challenges, setChallenges] = useState<Challenge[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("all");
 
-  const handleFilterChange = (filters: ChallengeFiltersType) => {
-    let filtered = challenges;
+  useEffect(() => {
+    fetchChallenges();
+  }, [user]);
 
-    if (filters.status !== "all") {
-      filtered = filtered.filter(c => c.status === filters.status);
+  const fetchChallenges = async () => {
+    try {
+      setLoading(true);
+      
+      // Fetch challenges
+      const { data: challengesData, error } = await supabase
+        .from('challenges')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+
+      // Process challenges and determine status
+      const processedChallenges = challengesData.map(challenge => {
+        const now = new Date();
+        const startDate = new Date(challenge.start_date);
+        const endDate = new Date(challenge.end_date);
+        
+        let status: "upcoming" | "active" | "completed";
+        if (now < startDate) {
+          status = "upcoming";
+        } else if (now > endDate) {
+          status = "completed";
+        } else {
+          status = "active";
+        }
+
+        return {
+          id: challenge.id,
+          title: challenge.title,
+          description: challenge.description || "",
+          goal: challenge.goal || 0,
+          type: challenge.type || "steps",
+          start_date: challenge.start_date,
+          end_date: challenge.end_date,
+          visibility: "public" as const,
+          created_by: challenge.created_by,
+          participantCount: 0, // Will be updated with actual count
+          status,
+          isJoined: false // Will be updated with actual status
+        };
+      });
+
+      setChallenges(processedChallenges);
+    } catch (error: any) {
+      console.error("Error fetching challenges:", error);
+      toast({
+        title: "Error",
+        description: "Failed to load challenges",
+        variant: "destructive"
+      });
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (filters.type !== "all") {
-      filtered = filtered.filter(c => c.type === filters.type);
-    }
-
-    if (filters.visibility !== "all") {
-      filtered = filtered.filter(c => c.visibility === filters.visibility);
-    }
-
-    if (filters.participation !== "all") {
-      if (filters.participation === "joined") {
-        filtered = filtered.filter(c => c.isJoined);
-      } else if (filters.participation === "not_joined") {
-        filtered = filtered.filter(c => !c.isJoined);
-      }
-    }
-
-    setFilteredChallenges(filtered);
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    await fetchChallenges();
+    setRefreshing(false);
   };
 
   const handleJoinChallenge = async (challengeId: string) => {
+    if (!user) return;
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setChallenges(prev => prev.map(c => 
-        c.id === challengeId 
-          ? { ...c, isJoined: true, participantCount: c.participantCount + 1 }
-          : c
-      ));
+      const { error } = await supabase
+        .from('challenge_participants')
+        .insert({
+          challenge_id: challengeId,
+          user_id: user.id
+        });
+
+      if (error) throw error;
       
       toast({
-        title: "Challenge Joined!",
-        description: "You've successfully joined the challenge. Good luck!",
+        title: "Success",
+        description: "You've joined the challenge!"
       });
-    } catch (error) {
+      
+      // Update local state
+      setChallenges(prev => prev.map(challenge => 
+        challenge.id === challengeId 
+          ? { ...challenge, isJoined: true, participantCount: challenge.participantCount + 1 }
+          : challenge
+      ));
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to join challenge. Please try again.",
-        variant: "destructive",
+        description: `Failed to join challenge: ${error.message}`,
+        variant: "destructive"
       });
     }
   };
 
   const handleLeaveChallenge = async (challengeId: string) => {
+    if (!user) return;
+    
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 500));
-      
-      setChallenges(prev => prev.map(c => 
-        c.id === challengeId 
-          ? { ...c, isJoined: false, participantCount: Math.max(0, c.participantCount - 1) }
-          : c
-      ));
+      const { error } = await supabase
+        .from('challenge_participants')
+        .delete()
+        .eq('challenge_id', challengeId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
       
       toast({
-        title: "Left Challenge",
-        description: "You've successfully left the challenge.",
+        title: "Success",
+        description: "You've left the challenge"
       });
-    } catch (error) {
+      
+      // Update local state
+      setChallenges(prev => prev.map(challenge => 
+        challenge.id === challengeId 
+          ? { ...challenge, isJoined: false, participantCount: Math.max(0, challenge.participantCount - 1) }
+          : challenge
+      ));
+    } catch (error: any) {
       toast({
         title: "Error",
-        description: "Failed to leave challenge. Please try again.",
-        variant: "destructive",
+        description: `Failed to leave challenge: ${error.message}`,
+        variant: "destructive"
       });
     }
   };
 
-  // ... keep existing code (filter challenges based on current filters)
-  const activeChallenges = filteredChallenges.filter(c => c.status === "active");
-  const upcomingChallenges = filteredChallenges.filter(c => c.status === "upcoming");
-  const joinedChallenges = filteredChallenges.filter(c => c.isJoined);
-  
+  const filteredChallenges = challenges.filter(challenge => {
+    if (activeFilter === "all") return true;
+    return challenge.status === activeFilter;
+  });
+
   return (
-    <AppLayout>
-      <div className="container px-4 py-6 pb-20 max-w-md mx-auto">
-        <h1 className="text-2xl font-bold mb-6 flex items-center gap-2">
-          <Trophy className="h-6 w-6 text-primary" />
-          Challenges
-        </h1>
-        
-        {/* Current Progress */}
-        <div className="bg-white rounded-xl girls-shadow mb-6">
-          <div className="p-4 border-b border-gray-100">
-            <h2 className="text-lg font-semibold mb-1">Today's Progress</h2>
-            <p className="text-sm text-muted-foreground">May 22, 2025</p>
-          </div>
-          
-          <div className="p-4 flex items-center justify-between">
-            <StepCounter currentSteps={currentSteps} goalSteps={10000} size="md" />
-            
-            <div>
-              <div className="text-sm mb-1">
-                <span className="font-medium">{currentSteps.toLocaleString()}</span> of {(10000).toLocaleString()} steps
-              </div>
-              
-              <div className="w-36 h-2 bg-gray-100 rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-primary rounded-full transition-all duration-500" 
-                  style={{ width: `${(currentSteps / 10000) * 100}%` }}
-                ></div>
-              </div>
-              
-              <div className="flex justify-between text-xs text-muted-foreground mt-1">
-                <span>0</span>
-                <span>Goal: 10K</span>
-              </div>
+    <ProfileProtectedRoute>
+      <AppLayout>
+        <div className="container max-w-4xl mx-auto px-4 py-6">
+          <div className="flex justify-between items-center mb-6">
+            <div className="flex items-center gap-2">
+              <Trophy className="h-6 w-6 text-primary" />
+              <h1 className="text-2xl font-bold">Challenges</h1>
             </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={handleRefresh}
+              disabled={refreshing}
+            >
+              <RefreshCw className={`h-4 w-4 mr-2 ${refreshing ? 'animate-spin' : ''}`} />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="mb-6 flex flex-wrap gap-4">
+            <CreateChallenge onChallengeCreated={fetchChallenges} />
+            <CreateYearRoundChallenge />
+          </div>
+
+          <div className="mb-6">
+            <ChallengeFilters 
+              activeFilter={activeFilter}
+              onFilterChange={setActiveFilter}
+            />
+          </div>
+
+          <div className="space-y-4">
+            {loading ? (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading challenges...</p>
+              </div>
+            ) : filteredChallenges.length > 0 ? (
+              <div className="grid gap-4 md:grid-cols-2">
+                {filteredChallenges.map((challenge) => (
+                  <ChallengeCard
+                    key={challenge.id}
+                    challenge={challenge}
+                    onJoin={handleJoinChallenge}
+                    onLeave={handleLeaveChallenge}
+                    onViewDetails={(id) => console.log("View challenge details:", id)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12">
+                <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <p className="text-lg font-medium text-muted-foreground mb-2">
+                  No challenges found
+                </p>
+                <p className="text-muted-foreground mb-4">
+                  {activeFilter === "all" 
+                    ? "Be the first to create a challenge!"
+                    : `No ${activeFilter} challenges available.`
+                  }
+                </p>
+                <CreateChallenge onChallengeCreated={fetchChallenges} />
+              </div>
+            )}
           </div>
         </div>
-        
-        {/* Challenges Tabs */}
-        <Tabs defaultValue="browse" className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="browse">Browse</TabsTrigger>
-            <TabsTrigger value="joined">Joined</TabsTrigger>
-            <TabsTrigger value="leaderboard">Leaders</TabsTrigger>
-            <TabsTrigger value="create">Create</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="browse" className="pt-4 animate-enter">
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg font-semibold">Browse Challenges</h2>
-                <Button variant="ghost" size="sm" className="text-primary flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4" />
-                  <span className="text-xs">Calendar</span>
-                </Button>
-              </div>
-
-              <ChallengeFilters onFilterChange={handleFilterChange} />
-              
-              {/* Active Challenges */}
-              {activeChallenges.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-medium text-sm text-muted-foreground">Active Challenges</h3>
-                  {activeChallenges.map(challenge => (
-                    <ChallengeCard
-                      key={challenge.id}
-                      challenge={challenge}
-                      onJoin={handleJoinChallenge}
-                      onLeave={handleLeaveChallenge}
-                      onViewDetails={setSelectedChallengeId}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {/* Upcoming Challenges */}
-              {upcomingChallenges.length > 0 && (
-                <div className="space-y-3">
-                  <h3 className="font-medium text-sm text-muted-foreground">Upcoming Challenges</h3>
-                  {upcomingChallenges.map(challenge => (
-                    <ChallengeCard
-                      key={challenge.id}
-                      challenge={challenge}
-                      onJoin={handleJoinChallenge}
-                      onLeave={handleLeaveChallenge}
-                      onViewDetails={setSelectedChallengeId}
-                    />
-                  ))}
-                </div>
-              )}
-
-              {filteredChallenges.length === 0 && (
-                <div className="text-center py-8">
-                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground">No challenges found with current filters.</p>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="joined" className="pt-4 animate-enter">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Your Challenges</h2>
-              
-              {joinedChallenges.length > 0 ? (
-                <div className="space-y-3">
-                  {joinedChallenges.map(challenge => (
-                    <ChallengeCard
-                      key={challenge.id}
-                      challenge={challenge}
-                      onJoin={handleJoinChallenge}
-                      onLeave={handleLeaveChallenge}
-                      onViewDetails={setSelectedChallengeId}
-                    />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8">
-                  <Trophy className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
-                  <p className="text-muted-foreground mb-4">You haven't joined any challenges yet.</p>
-                  <Button onClick={() => setSelectedChallengeId("1")}>
-                    Browse Challenges
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
-          
-          <TabsContent value="leaderboard" className="pt-4 animate-enter">
-            <LeaderboardCard 
-              title="Today's Steps"
-              description="May 22, 2025"
-              timeframe="daily"
-              users={mockDailyLeaderboard}
-              currentUserId="current"
-            />
-          </TabsContent>
-          
-          <TabsContent value="create" className="pt-4 animate-enter">
-            <div className="space-y-4">
-              <h2 className="text-lg font-semibold">Create Challenge</h2>
-              <CreateChallenge />
-            </div>
-          </TabsContent>
-        </Tabs>
-
-        {/* Challenge Details Modal */}
-        <ChallengeDetails
-          challengeId={selectedChallengeId}
-          isOpen={!!selectedChallengeId}
-          onClose={() => setSelectedChallengeId(null)}
-          onJoin={handleJoinChallenge}
-          onLeave={handleLeaveChallenge}
-        />
-      </div>
-    </AppLayout>
+      </AppLayout>
+    </ProfileProtectedRoute>
   );
-};
-
-export default Challenges;
+}

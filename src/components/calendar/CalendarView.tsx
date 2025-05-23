@@ -10,9 +10,10 @@ interface CalendarViewProps {
   events: CalendarEvent[];
   date: Date | undefined;
   setDate: (date: Date | undefined) => void;
+  onEventCreated?: () => void;
 }
 
-export function CalendarView({ events, date, setDate }: CalendarViewProps) {
+export function CalendarView({ events, date, setDate, onEventCreated }: CalendarViewProps) {
   const groupedEvents = groupEventsByDate(events);
   const selectedDateEvents = date ? groupedEvents[date.toDateString()] || [] : [];
   
@@ -87,7 +88,7 @@ export function CalendarView({ events, date, setDate }: CalendarViewProps) {
           <h2 className="font-semibold text-lg">
             {date?.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
           </h2>
-          <CreateEventDialog selectedDate={date} />
+          <CreateEventDialog selectedDate={date} onEventCreated={onEventCreated} />
         </div>
         
         {selectedDateEvents.length > 0 ? (

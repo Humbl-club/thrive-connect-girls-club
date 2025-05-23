@@ -50,8 +50,8 @@ export default function Auth() {
         description: "Check your email to confirm your account.",
       });
       
-      // Force a full page reload to ensure proper redirection
-      window.location.href = "/";
+      // Force a full page reload to ensure proper redirection to the feed
+      window.location.href = "/feed";
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,8 +89,8 @@ export default function Auth() {
         description: "You've been successfully logged in.",
       });
       
-      // Force a full page reload to ensure proper redirection
-      window.location.href = "/";
+      // Force a full page reload to ensure proper redirection to the feed
+      window.location.href = "/feed";
     } catch (error: any) {
       toast({
         title: "Error",

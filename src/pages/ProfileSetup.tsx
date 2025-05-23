@@ -110,11 +110,11 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      // Allow the toast to be displayed briefly, then force redirect
+      // Allow the toast to be displayed briefly, then force redirect to the feed page
       setTimeout(() => {
-        console.log("Redirecting to dashboard...");
-        // Force a complete page reload and navigation
-        window.location.replace("/");
+        console.log("Redirecting to feed page...");
+        // Force a complete page reload and navigation to feed
+        window.location.replace("/feed");
       }, 800);
 
     } catch (error: any) {

@@ -56,7 +56,7 @@ export default function Challenges() {
     try {
       setLoading(true);
       
-      // Fetch challenges
+      // Fetch challenges with all available columns
       const { data: challengesData, error } = await supabase
         .from('challenges')
         .select('*')
@@ -64,10 +64,10 @@ export default function Challenges() {
 
       if (error) throw error;
 
-      // Fetch challenge participants
+      // Fetch challenge participants for current user
       const { data: participantsData, error: participantsError } = await supabase
         .from('challenge_participants')
-        .select('challenge_id, user_id, steps, progress')
+        .select('challenge_id, user_id, steps')
         .eq('user_id', user.id);
 
       if (participantsError) throw participantsError;
@@ -76,10 +76,13 @@ export default function Challenges() {
       const joinedChallenges = new Map();
       const progressMap = new Map();
       
-      participantsData?.forEach(participant => {
-        joinedChallenges.set(participant.challenge_id, true);
-        progressMap.set(participant.challenge_id, participant.progress || participant.steps || 0);
-      });
+      if (participantsData) {
+        participantsData.forEach(participant => {
+          joinedChallenges.set(participant.challenge_id, true);
+          // Use steps as progress for now, can be updated later when progress column is available
+          progressMap.set(participant.challenge_id, participant.steps || 0);
+        });
+      }
 
       // Get participant counts per challenge
       const participantCounts = new Map();
@@ -113,11 +116,11 @@ export default function Challenges() {
           id: challenge.id,
           title: challenge.title,
           description: challenge.description || "",
-          goal: challenge.goal || 10000,
-          type: (challenge.type as "steps" | "distance" | "active_minutes") || "steps",
+          goal: (challenge as any).goal || 10000, // Use type assertion for now
+          type: ((challenge as any).type as "steps" | "distance" | "active_minutes") || "steps",
           startDate: challenge.start_date,
           endDate: challenge.end_date,
-          visibility: (challenge.visibility as "public" | "friends" | "private") || "public",
+          visibility: ((challenge as any).visibility as "public" | "friends" | "private") || "public",
           createdBy: challenge.created_by,
           participantCount: participantCounts.get(challenge.id) || 0,
           userProgress: progressMap.get(challenge.id),
@@ -158,8 +161,7 @@ export default function Challenges() {
         .insert({
           challenge_id: challengeId,
           user_id: user.id,
-          steps: 0,
-          progress: 0
+          steps: 0
         });
 
       if (error) throw error;

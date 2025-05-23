@@ -1,7 +1,8 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/components/auth/AuthProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
@@ -18,6 +19,19 @@ export default function Auth() {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, profile, loading: authLoading } = useAuth();
+
+  // Redirect authenticated users
+  useEffect(() => {
+    if (!authLoading && user) {
+      console.log("Auth page: User is authenticated, redirecting...", { hasProfile: !!profile });
+      if (profile && profile.full_name && profile.username && profile.instagram_handle) {
+        navigate("/feed", { replace: true });
+      } else {
+        navigate("/profile-setup", { replace: true });
+      }
+    }
+  }, [user, profile, authLoading, navigate]);
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,11 +61,10 @@ export default function Auth() {
       
       toast({
         title: "Account created!",
-        description: "Check your email to confirm your account.",
+        description: "Welcome to the fitness app!",
       });
       
-      // Force a full page reload to ensure proper redirection to the feed
-      window.location.href = "/feed";
+      // Don't manually navigate - let the useEffect handle it
     } catch (error: any) {
       toast({
         title: "Error",
@@ -89,8 +102,7 @@ export default function Auth() {
         description: "You've been successfully logged in.",
       });
       
-      // Force a full page reload to ensure proper redirection to the feed
-      window.location.href = "/feed";
+      // Don't manually navigate - let the useEffect handle it
     } catch (error: any) {
       toast({
         title: "Error",
@@ -101,6 +113,15 @@ export default function Auth() {
       setLoading(false);
     }
   };
+
+  // Show loading while auth is initializing
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">

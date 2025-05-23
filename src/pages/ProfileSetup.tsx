@@ -121,7 +121,7 @@ export default function ProfileSetup() {
 
       console.log("Profile refreshed, navigating to feed...");
       
-      // Navigate to feed
+      // Navigate to feed immediately
       navigate("/feed", { replace: true });
 
     } catch (error: any) {

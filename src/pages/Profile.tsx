@@ -1,15 +1,16 @@
 
 import { useState, useEffect } from "react";
+import { Link } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { ProfileHeader } from "@/components/ui/profile-header";
 import { Badge } from "@/components/ui/badge";
 import { StepCounter } from "@/components/ui/step-counter";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
-import { Award, Settings, Camera, Instagram } from "lucide-react";
+import { Award, Settings, Camera, Instagram, MapPin } from "lucide-react";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { supabase } from "@/integrations/supabase/client";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -52,7 +53,7 @@ const Profile = () => {
           .select('steps')
           .eq('user_id', user.id)
           .eq('date', today)
-          .single();
+          .maybeSingle();
         
         // Fetch weekly data (last 7 days)
         const sevenDaysAgo = new Date();
@@ -80,7 +81,7 @@ const Profile = () => {
           .lte('date', today);
 
         // Calculate days where goal was met
-        const goalDays = monthData?.filter(day => day.steps >= 10000).length || 0;
+        const goalDays = monthData?.filter(day => day.steps && day.steps >= 10000).length || 0;
         
         // Calculate total steps for the month
         const totalSteps = monthData?.reduce((sum, day) => sum + (day.steps || 0), 0) || 0;
@@ -131,18 +132,6 @@ const Profile = () => {
       
       setUploadingAvatar(true);
       
-      // Check if storage bucket exists, create if not
-      const { data: buckets } = await supabase.storage.listBuckets();
-      const avatarBucket = buckets?.find(bucket => bucket.name === 'avatars');
-      
-      if (!avatarBucket) {
-        console.log('Creating avatars bucket');
-        await supabase.storage.createBucket('avatars', {
-          public: true,
-          fileSizeLimit: 1024 * 1024 * 2, // 2MB limit
-        });
-      }
-      
       // Upload the file
       const { error: uploadError } = await supabase.storage
         .from('avatars')
@@ -186,8 +175,8 @@ const Profile = () => {
   };
   
   const fullName = profile?.full_name || user?.email?.split('@')[0] || "User";
-  const username = profile?.username || "username";
-  const bioText = profile?.bio || "No bio yet";
+  const username = profile?.username || user?.email?.split('@')[0] || "username";
+  const bioText = profile?.bio || "Welcome to my fitness journey! 💪";
   const location = profile?.location || "";
   const instagramHandle = profile?.instagram_handle || "";
   
@@ -454,7 +443,3 @@ const Profile = () => {
 };
 
 export default Profile;
-
-// Need to add this import at the top
-import { Link } from "react-router-dom";
-import { MapPin } from "lucide-react";

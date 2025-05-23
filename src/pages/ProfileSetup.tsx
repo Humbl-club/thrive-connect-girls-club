@@ -9,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { User, MapPin, Calendar } from "lucide-react";
+import { User, MapPin, Calendar, Instagram } from "lucide-react";
 
 export default function ProfileSetup() {
   const [fullName, setFullName] = useState("");
@@ -17,6 +17,7 @@ export default function ProfileSetup() {
   const [bio, setBio] = useState("");
   const [location, setLocation] = useState("");
   const [birthDate, setBirthDate] = useState("");
+  const [instagramHandle, setInstagramHandle] = useState("");
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -47,6 +48,7 @@ export default function ProfileSetup() {
           bio: bio || null,
           location: location || null,
           birth_date: birthDate || null,
+          instagram_handle: instagramHandle || null,
         })
         .eq('id', user.id);
 
@@ -109,6 +111,21 @@ export default function ProfileSetup() {
                   onChange={(e) => setUsername(e.target.value)}
                   required
                 />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="instagramHandle">Instagram Handle</Label>
+                <div className="relative">
+                  <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    id="instagramHandle"
+                    type="text"
+                    placeholder="@johndoe"
+                    value={instagramHandle}
+                    onChange={(e) => setInstagramHandle(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
               </div>
 
               <div className="space-y-2">

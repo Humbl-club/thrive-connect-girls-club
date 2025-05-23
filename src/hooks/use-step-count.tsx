@@ -65,8 +65,12 @@ export function useStepCount(options: StepCountOptions = {}) {
         
         if (error) throw error;
         
-        if (data?.settings?.stepGoal) {
-          setDailyGoal(data.settings.stepGoal);
+        // Fix: Type-check and safely access the stepGoal property
+        if (data?.settings && typeof data.settings === 'object') {
+          const settings = data.settings as Record<string, any>;
+          if (settings.stepGoal && typeof settings.stepGoal === 'number') {
+            setDailyGoal(settings.stepGoal);
+          }
         }
       } catch (err) {
         console.error("Error fetching user settings:", err);
@@ -286,9 +290,17 @@ export function useStepCount(options: StepCountOptions = {}) {
         
         if (fetchError) throw fetchError;
         
+        // Fix: Create a proper settings object instead of spreading potentially non-object data
+        let newSettings: Record<string, any> = { stepGoal: goal };
+        
+        if (data?.settings && typeof data.settings === 'object') {
+          // Only merge if settings is an object
+          const existingSettings = data.settings as Record<string, any>;
+          newSettings = { ...existingSettings, stepGoal: goal };
+        }
+        
         if (data) {
           // Update existing settings
-          const newSettings = { ...data.settings, stepGoal: goal };
           const { error: updateError } = await supabase
             .from('user_settings')
             .update({ settings: newSettings })
@@ -301,7 +313,7 @@ export function useStepCount(options: StepCountOptions = {}) {
             .from('user_settings')
             .insert({
               user_id: user.id,
-              settings: { stepGoal: goal }
+              settings: newSettings
             });
           
           if (insertError) throw insertError;

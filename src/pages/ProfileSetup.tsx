@@ -110,10 +110,8 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      // Small delay to ensure profile state is updated before redirect
-      setTimeout(() => {
-        navigate("/");
-      }, 100);
+      // Force navigation to dashboard
+      window.location.href = "/";
 
     } catch (error: any) {
       toast({

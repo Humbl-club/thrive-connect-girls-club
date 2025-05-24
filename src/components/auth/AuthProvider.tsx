@@ -30,7 +30,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error && error.code !== 'PGRST116') {
-        throw error;
+        console.error('Error fetching profile:', error);
       }
 
       if (profile) {
@@ -54,19 +54,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         if (insertError) {
           console.error('Error creating profile:', insertError);
-          setProfile({
+          // Create a fallback profile
+          const fallbackProfile = {
             id: user.id,
             username,
             full_name: user.user_metadata?.full_name || null,
             avatar_url: user.user_metadata?.avatar_url || null,
-          });
+          };
+          setProfile(fallbackProfile);
         } else {
           console.log("New profile created:", newProfile);
           setProfile(newProfile);
         }
       }
     } catch (error) {
-      console.error('Error fetching user profile:', error);
+      console.error('Error in fetchUserProfile:', error);
       // Create a fallback profile
       const username = user.email ? user.email.split('@')[0] : `user_${Date.now()}`;
       setProfile({
@@ -90,48 +92,59 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     let isMounted = true;
     
-    // Get initial session first
+    // Set up auth state listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (!isMounted) return;
+        
+        console.log("Auth state change:", event, !!session);
+        
+        if (session?.user) {
+          setSession(session);
+          setUser(session.user);
+          
+          // Fetch profile asynchronously without blocking
+          setTimeout(() => {
+            if (isMounted) {
+              fetchUserProfile(session.user);
+            }
+          }, 0);
+        } else {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        // Set loading to false after handling the auth state
+        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+          setLoading(false);
+        }
+      }
+    );
+
+    // Get initial session
     supabase.auth.getSession().then(({ data: { session }, error }) => {
       if (error) {
         console.error("Error getting initial session:", error);
+        setLoading(false);
+        return;
       }
       
       if (isMounted) {
         console.log("Initial session check:", !!session);
-        setSession(session);
-        setUser(session?.user ?? null);
         
         if (session?.user) {
-          fetchUserProfile(session.user);
+          setSession(session);
+          setUser(session.user);
+          // Profile will be fetched by the auth state change handler
         } else {
+          setSession(null);
+          setUser(null);
           setProfile(null);
+          setLoading(false);
         }
-        
-        setLoading(false);
       }
     });
-
-    // Set up auth state listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (event, session) => {
-        if (isMounted) {
-          console.log("Auth state change:", event, !!session);
-          setSession(session);
-          setUser(session?.user ?? null);
-          
-          if (session?.user) {
-            // Use setTimeout to avoid blocking the auth state change
-            setTimeout(() => {
-              if (isMounted) {
-                fetchUserProfile(session.user);
-              }
-            }, 0);
-          } else {
-            setProfile(null);
-          }
-        }
-      }
-    );
 
     return () => {
       isMounted = false;
@@ -141,7 +154,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     console.log("Signing out...");
+    setLoading(true);
     await supabase.auth.signOut();
+    // Auth state change handler will clean up the state
   };
 
   return (

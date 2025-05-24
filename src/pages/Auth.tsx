@@ -23,13 +23,32 @@ export default function Auth() {
 
   // Redirect authenticated users
   useEffect(() => {
-    if (!authLoading && user) {
-      console.log("Auth page: User is authenticated, redirecting...", { hasProfile: !!profile });
-      if (profile && profile.full_name && profile.username && profile.instagram_handle) {
-        navigate("/feed", { replace: true });
-      } else {
-        navigate("/profile-setup", { replace: true });
-      }
+    if (authLoading) {
+      console.log("Auth page: Still loading auth state...");
+      return;
+    }
+
+    if (user) {
+      console.log("Auth page: User is authenticated, checking profile...", { 
+        hasUser: !!user, 
+        hasProfile: !!profile,
+        profileComplete: profile && profile.full_name && profile.username && profile.instagram_handle
+      });
+      
+      // Give a small delay to ensure profile is loaded
+      const timer = setTimeout(() => {
+        if (profile && profile.full_name && profile.username && profile.instagram_handle) {
+          console.log("Auth page: Profile complete, redirecting to feed");
+          navigate("/feed", { replace: true });
+        } else {
+          console.log("Auth page: Profile incomplete, redirecting to setup");
+          navigate("/profile-setup", { replace: true });
+        }
+      }, 100);
+
+      return () => clearTimeout(timer);
+    } else {
+      console.log("Auth page: No user found, staying on auth page");
     }
   }, [user, profile, authLoading, navigate]);
 
@@ -38,7 +57,7 @@ export default function Auth() {
     if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -59,13 +78,20 @@ export default function Auth() {
       
       if (error) throw error;
       
-      toast({
-        title: "Account created!",
-        description: "Welcome to the fitness app!",
-      });
+      if (data.user && !data.session) {
+        toast({
+          title: "Check your email",
+          description: "We sent you a confirmation link. Please check your email and click the link to complete your registration.",
+        });
+      } else {
+        toast({
+          title: "Account created!",
+          description: "Welcome to the fitness app!",
+        });
+      }
       
-      // Don't manually navigate - let the useEffect handle it
     } catch (error: any) {
+      console.error("Sign up error:", error);
       toast({
         title: "Error",
         description: error.message || "An error occurred during sign up",
@@ -81,7 +107,7 @@ export default function Auth() {
     if (!email || !password) {
       toast({
         title: "Error",
-        description: "Please fill in all fields",
+        description: "Please fill in all required fields",
         variant: "destructive",
       });
       return;
@@ -97,13 +123,14 @@ export default function Auth() {
       
       if (error) throw error;
       
+      console.log("Sign in successful:", data);
       toast({
         title: "Welcome back!",
         description: "You've been successfully logged in.",
       });
       
-      // Don't manually navigate - let the useEffect handle it
     } catch (error: any) {
+      console.error("Sign in error:", error);
       toast({
         title: "Error",
         description: error.message || "An error occurred during sign in",
@@ -119,6 +146,17 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="mt-2 text-sm text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
+
+  // If user is authenticated, don't show the form (redirect will happen)
+  if (user) {
+    return (
+      <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        <p className="mt-2 text-sm text-muted-foreground">Redirecting...</p>
       </div>
     );
   }
@@ -197,7 +235,7 @@ export default function Auth() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="email-signup">Email</Label>
+                <Label htmlFor="email-signup">Email *</Label>
                 <Input 
                   id="email-signup"
                   type="email"
@@ -209,7 +247,7 @@ export default function Auth() {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="password-signup">Password</Label>
+                <Label htmlFor="password-signup">Password *</Label>
                 <div className="relative">
                   <Input 
                     id="password-signup"

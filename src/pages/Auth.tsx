@@ -44,7 +44,7 @@ export default function Auth() {
           console.log("Auth page: Profile incomplete, redirecting to setup");
           navigate("/profile-setup", { replace: true });
         }
-      }, 100);
+      }, 500);
 
       return () => clearTimeout(timer);
     } else {
@@ -65,6 +65,7 @@ export default function Auth() {
     
     try {
       setLoading(true);
+      console.log("Starting sign up process...");
       
       const { data, error } = await supabase.auth.signUp({
         email,
@@ -76,25 +77,41 @@ export default function Auth() {
         },
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign up error:", error);
+        throw error;
+      }
+      
+      console.log("Sign up response:", data);
       
       if (data.user && !data.session) {
         toast({
           title: "Check your email",
           description: "We sent you a confirmation link. Please check your email and click the link to complete your registration.",
         });
-      } else {
+      } else if (data.session) {
         toast({
           title: "Account created!",
           description: "Welcome to the fitness app!",
         });
+        // The auth state change will handle navigation
       }
       
     } catch (error: any) {
       console.error("Sign up error:", error);
+      let errorMessage = "An error occurred during sign up";
+      
+      if (error.message.includes("already registered")) {
+        errorMessage = "An account with this email already exists. Please sign in instead.";
+      } else if (error.message.includes("password")) {
+        errorMessage = "Password must be at least 6 characters long";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "An error occurred during sign up",
+        title: "Sign up failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -115,13 +132,17 @@ export default function Auth() {
     
     try {
       setLoading(true);
+      console.log("Starting sign in process...");
       
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
-      if (error) throw error;
+      if (error) {
+        console.error("Sign in error:", error);
+        throw error;
+      }
       
       console.log("Sign in successful:", data);
       toast({
@@ -129,11 +150,23 @@ export default function Auth() {
         description: "You've been successfully logged in.",
       });
       
+      // The auth state change will handle navigation
+      
     } catch (error: any) {
       console.error("Sign in error:", error);
+      let errorMessage = "An error occurred during sign in";
+      
+      if (error.message.includes("Invalid login credentials")) {
+        errorMessage = "Invalid email or password. Please check your credentials and try again.";
+      } else if (error.message.includes("Email not confirmed")) {
+        errorMessage = "Please check your email and confirm your account before signing in.";
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       toast({
-        title: "Error",
-        description: error.message || "An error occurred during sign in",
+        title: "Sign in failed",
+        description: errorMessage,
         variant: "destructive",
       });
     } finally {
@@ -256,6 +289,7 @@ export default function Auth() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
+                    minLength={6}
                   />
                   <button 
                     type="button"
@@ -265,6 +299,9 @@ export default function Auth() {
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
                 </div>
+                <p className="text-xs text-muted-foreground">
+                  Password must be at least 6 characters long
+                </p>
               </div>
               
               <Button 

@@ -99,6 +99,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         
         console.log("Auth state change:", event, !!session);
         
+        setLoading(true);
+        
         if (session?.user) {
           setSession(session);
           setUser(session.user);
@@ -116,9 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Set loading to false after handling the auth state
-        if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN' || event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
-          setLoading(false);
-        }
+        setLoading(false);
       }
     );
 

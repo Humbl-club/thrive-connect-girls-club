@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { stepTracker, StepData } from '@/services/stepTracker';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/auth/AuthProvider';
@@ -14,6 +14,9 @@ export const useStepTracking = () => {
   const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+  
+  // Prevent multiple error messages
+  const errorShown = useRef(false);
 
   // Handle step count updates from any source
   const handleStepUpdate = useCallback(async (stepData: StepData) => {
@@ -72,9 +75,12 @@ export const useStepTracking = () => {
     }
   }, [handleStepUpdate, initialized]);
 
-  // Show single error and disable tracking
+  // Show single error and disable tracking - only once
   const disableTrackingWithError = useCallback((message: string) => {
+    if (errorShown.current) return; // Prevent multiple error messages
+    
     console.log('Disabling tracking:', message);
+    errorShown.current = true;
     setTrackingDisabled(true);
     setIsTracking(false);
     setLoading(false);
@@ -94,7 +100,7 @@ export const useStepTracking = () => {
 
   // Connect to device pedometer with timeout
   const connectDevice = async () => {
-    if (trackingDisabled || loading) return false;
+    if (trackingDisabled || loading || errorShown.current) return false;
     
     setLoading(true);
     console.log('Attempting to connect device...');
@@ -103,7 +109,7 @@ export const useStepTracking = () => {
       // Add timeout to prevent hanging
       const connectPromise = stepTracker.startDeviceTracking();
       const timeoutPromise = new Promise<boolean>((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+        setTimeout(() => reject(new Error('Connection timeout')), 5000) // Reduced timeout
       );
       
       const success = await Promise.race([connectPromise, timeoutPromise]);
@@ -130,13 +136,13 @@ export const useStepTracking = () => {
 
   // Connect to Apple Health with timeout
   const connectAppleHealth = async () => {
-    if (trackingDisabled || loading) return false;
+    if (trackingDisabled || loading || errorShown.current) return false;
     
     setLoading(true);
     try {
       const connectPromise = stepTracker.connectAppleHealth();
       const timeoutPromise = new Promise<boolean>((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        setTimeout(() => reject(new Error('Connection timeout')), 3000)
       );
       
       const success = await Promise.race([connectPromise, timeoutPromise]);
@@ -161,13 +167,13 @@ export const useStepTracking = () => {
 
   // Connect to Google Fit with timeout
   const connectGoogleFit = async () => {
-    if (trackingDisabled || loading) return false;
+    if (trackingDisabled || loading || errorShown.current) return false;
     
     setLoading(true);
     try {
       const connectPromise = stepTracker.connectGoogleFit();
       const timeoutPromise = new Promise<boolean>((_, reject) => 
-        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+        setTimeout(() => reject(new Error('Connection timeout')), 3000)
       );
       
       const success = await Promise.race([connectPromise, timeoutPromise]);
@@ -192,7 +198,7 @@ export const useStepTracking = () => {
 
   // Connect to Fitbit with timeout
   const connectFitbit = async () => {
-    if (trackingDisabled || loading) return false;
+    if (trackingDisabled || loading || errorShown.current) return false;
     
     setLoading(true);
     try {

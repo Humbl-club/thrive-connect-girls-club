@@ -1,5 +1,5 @@
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { StepCounter } from "@/components/ui/step-counter";
 import { Button } from "@/components/ui/button";
 import { Footprints, MoreHorizontal, Settings, AlertCircle } from "lucide-react";
@@ -14,22 +14,28 @@ export function StepWidgetSmall() {
     startDeviceTracking 
   } = useStepCount();
   
-  // Try to start device tracking on component mount, but don't block
+  const trackingAttempted = useRef(false);
+  
+  // Try to start device tracking on component mount, but only once
   useEffect(() => {
+    if (trackingAttempted.current) return;
+    
     const initTracking = async () => {
       try {
+        trackingAttempted.current = true;
         console.log('StepWidgetSmall: Attempting to start device tracking...');
         await startDeviceTracking();
         console.log('StepWidgetSmall: Device tracking started successfully');
       } catch (error) {
         console.log('StepWidgetSmall: Automatic step tracking not available:', error);
+        // Don't show any popup or toast here - let the hook handle it
       }
     };
     
     // Use a short delay to prevent blocking the UI
     const timer = setTimeout(initTracking, 100);
     return () => clearTimeout(timer);
-  }, [startDeviceTracking]);
+  }, []); // Remove startDeviceTracking from dependencies to prevent re-runs
   
   console.log('StepWidgetSmall render:', { currentSteps, dailyGoal, loading });
   

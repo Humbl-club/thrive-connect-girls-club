@@ -12,6 +12,10 @@ export type Challenge = Tables<'challenges'> & {
   status: "upcoming" | "active" | "completed";
   type: "steps" | "distance" | "active_minutes";
   visibility: "public" | "friends" | "private";
+  goal: number;
+  startDate: string;
+  endDate: string;
+  createdBy: string;
 };
 
 export function useChallenges() {
@@ -84,18 +88,14 @@ export function useChallenges() {
         const isJoined = joinedChallengesMap.has(dbChallenge.id);
         const userProgress = isJoined ? joinedChallengesMap.get(dbChallenge.id) : undefined;
 
-        // This part is tricky without knowing the exact DB schema for `challenges`
-        // We assume `type` and `visibility` columns exist but might be nullable
-        // We also need to add 'goal' to the Challenge type definition if it's missing
-        const challengeWithDefaults = {
-            ...dbChallenge,
-            type: (dbChallenge as any).type as Challenge['type'] || 'steps',
-            visibility: (dbChallenge as any).visibility as Challenge['visibility'] || 'public',
-            goal: (dbChallenge as any).goal || 10000,
-        };
-
         return {
-          ...challengeWithDefaults,
+          ...dbChallenge,
+          type: (dbChallenge as any).type as Challenge['type'] || 'steps',
+          visibility: (dbChallenge as any).visibility as Challenge['visibility'] || 'public',
+          goal: (dbChallenge as any).goal || 10000,
+          startDate: dbChallenge.start_date,
+          endDate: dbChallenge.end_date,
+          createdBy: dbChallenge.created_by,
           participantCount: participantCountsMap.get(dbChallenge.id) || 0,
           userProgress: userProgress ?? undefined,
           status,
@@ -185,6 +185,7 @@ export function useChallenges() {
     refreshing,
     handleRefresh,
     handleJoinChallenge,
-    handleLeaveChallenge
+    handleLeaveChallenge,
+    fetchChallenges
   };
 }

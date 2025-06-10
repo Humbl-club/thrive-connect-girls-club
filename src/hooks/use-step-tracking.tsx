@@ -11,6 +11,7 @@ export const useStepTracking = () => {
   const [connectedSources, setConnectedSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [trackingDisabled, setTrackingDisabled] = useState(false);
+  const [initialized, setInitialized] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -41,32 +42,72 @@ export const useStepTracking = () => {
     }
   }, [user]);
 
-  // Initialize step tracking service
+  // Initialize step tracking service once
   useEffect(() => {
-    stepTracker.setStepCountCallback(handleStepUpdate);
-  }, [handleStepUpdate]);
+    if (!initialized) {
+      console.log('Initializing step tracker...');
+      
+      // Check if step tracking is available
+      const checkAvailability = async () => {
+        try {
+          // Quick check for step tracking availability
+          if (!('permissions' in navigator) || !stepTracker) {
+            console.log('Step tracking not available on this device');
+            setTrackingDisabled(true);
+            setInitialized(true);
+            return;
+          }
+          
+          stepTracker.setStepCountCallback(handleStepUpdate);
+          setInitialized(true);
+          console.log('Step tracker initialized successfully');
+        } catch (error) {
+          console.error('Error initializing step tracker:', error);
+          setTrackingDisabled(true);
+          setInitialized(true);
+        }
+      };
+      
+      checkAvailability();
+    }
+  }, [handleStepUpdate, initialized]);
 
-  // Show error and disable tracking
+  // Show single error and disable tracking
   const disableTrackingWithError = useCallback((message: string) => {
+    console.log('Disabling tracking:', message);
     setTrackingDisabled(true);
     setIsTracking(false);
     setLoading(false);
-    stepTracker.stopTracking();
+    
+    try {
+      stepTracker.stopTracking();
+    } catch (error) {
+      console.error('Error stopping tracker:', error);
+    }
     
     toast({
-      title: "Step Tracking Unavailable",
+      title: "Step Tracking Disabled",
       description: message,
       variant: "destructive"
     });
   }, [toast]);
 
-  // Connect to device pedometer
+  // Connect to device pedometer with timeout
   const connectDevice = async () => {
-    if (trackingDisabled) return;
+    if (trackingDisabled || loading) return false;
     
     setLoading(true);
+    console.log('Attempting to connect device...');
+    
     try {
-      const success = await stepTracker.startDeviceTracking();
+      // Add timeout to prevent hanging
+      const connectPromise = stepTracker.startDeviceTracking();
+      const timeoutPromise = new Promise<boolean>((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 10000)
+      );
+      
+      const success = await Promise.race([connectPromise, timeoutPromise]);
+      
       if (success) {
         setIsTracking(true);
         setConnectedSources(prev => [...prev, 'device']);
@@ -74,78 +115,87 @@ export const useStepTracking = () => {
           title: "Device Connected",
           description: "Successfully connected to device pedometer"
         });
+        setLoading(false);
+        return true;
       } else {
-        disableTrackingWithError("Device step tracking is not available on this device or browser. Please try manual step entry instead.");
+        disableTrackingWithError("Device step tracking is not available. You can manually enter your steps instead.");
+        return false;
       }
-    } catch (error) {
-      disableTrackingWithError("Step tracking cannot be accessed. Please use manual step entry.");
-    } finally {
-      setLoading(false);
+    } catch (error: any) {
+      console.error('Device connection error:', error);
+      disableTrackingWithError("Step tracking is not available on this device. You can manually enter your steps instead.");
+      return false;
     }
   };
 
-  // Connect to Apple Health
+  // Connect to Apple Health with timeout
   const connectAppleHealth = async () => {
-    if (trackingDisabled) return;
+    if (trackingDisabled || loading) return false;
     
     setLoading(true);
     try {
-      const success = await stepTracker.connectAppleHealth();
+      const connectPromise = stepTracker.connectAppleHealth();
+      const timeoutPromise = new Promise<boolean>((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+      );
+      
+      const success = await Promise.race([connectPromise, timeoutPromise]);
+      
       if (success) {
         setConnectedSources(prev => [...prev, 'apple_health']);
         toast({
           title: "Apple Health Connected",
           description: "Successfully connected to Apple Health"
         });
+        setLoading(false);
+        return true;
       } else {
-        disableTrackingWithError("Apple Health is not available. This feature requires iOS 16+ and installation as a web app.");
+        disableTrackingWithError("Apple Health is not available. Manual step entry is available.");
+        return false;
       }
     } catch (error) {
-      disableTrackingWithError("Apple Health connection failed. Please use manual step entry.");
-    } finally {
-      setLoading(false);
+      disableTrackingWithError("Apple Health connection failed. Manual step entry is available.");
+      return false;
     }
   };
 
-  // Connect to Google Fit
+  // Connect to Google Fit with timeout
   const connectGoogleFit = async () => {
-    if (trackingDisabled) return;
+    if (trackingDisabled || loading) return false;
     
     setLoading(true);
     try {
-      // Configure Google Fit client ID (you'll need to get this from Google Cloud Console)
-      stepTracker.setConfig({
-        googleFitClientId: 'your-google-fit-client-id'
-      });
+      const connectPromise = stepTracker.connectGoogleFit();
+      const timeoutPromise = new Promise<boolean>((_, reject) => 
+        setTimeout(() => reject(new Error('Connection timeout')), 5000)
+      );
       
-      const success = await stepTracker.connectGoogleFit();
+      const success = await Promise.race([connectPromise, timeoutPromise]);
+      
       if (success) {
         setConnectedSources(prev => [...prev, 'google_fit']);
         toast({
           title: "Google Fit Connected",
           description: "Successfully connected to Google Fit"
         });
+        setLoading(false);
+        return true;
       } else {
-        disableTrackingWithError("Google Fit connection is not configured. Please use manual step entry.");
+        disableTrackingWithError("Google Fit connection is not configured. Manual step entry is available.");
+        return false;
       }
     } catch (error) {
-      disableTrackingWithError("Google Fit is not available. Please use manual step entry.");
-    } finally {
-      setLoading(false);
+      disableTrackingWithError("Google Fit is not available. Manual step entry is available.");
+      return false;
     }
   };
 
-  // Connect to Fitbit
+  // Connect to Fitbit with timeout
   const connectFitbit = async () => {
-    if (trackingDisabled) return;
+    if (trackingDisabled || loading) return false;
     
     setLoading(true);
     try {
-      // Configure Fitbit client ID (you'll need to get this from Fitbit Dev Console)
-      stepTracker.setConfig({
-        fitbitClientId: 'your-fitbit-client-id'
-      });
-      
       const success = await stepTracker.connectFitbit();
       if (success) {
         toast({
@@ -153,44 +203,49 @@ export const useStepTracking = () => {
           description: "You'll be redirected to authorize Fitbit access"
         });
       }
-    } catch (error) {
-      disableTrackingWithError("Fitbit connection is not available. Please use manual step entry.");
-    } finally {
       setLoading(false);
+      return success;
+    } catch (error) {
+      disableTrackingWithError("Fitbit connection is not available. Manual step entry is available.");
+      return false;
     }
   };
 
   // Stop tracking
   const stopTracking = () => {
-    stepTracker.stopTracking();
-    setIsTracking(false);
+    try {
+      stepTracker.stopTracking();
+      setIsTracking(false);
+    } catch (error) {
+      console.error('Error stopping tracking:', error);
+    }
   };
 
   // Load today's steps on mount
   useEffect(() => {
+    if (!user || !initialized) return;
+    
     const loadTodaySteps = async () => {
-      if (user) {
-        try {
-          const today = new Date().toISOString().split('T')[0];
-          
-          const { data, error } = await supabase
-            .from('activity_data')
-            .select('steps')
-            .eq('user_id', user.id)
-            .eq('date', today)
-            .single();
+      try {
+        const today = new Date().toISOString().split('T')[0];
+        
+        const { data, error } = await supabase
+          .from('activity_data')
+          .select('steps')
+          .eq('user_id', user.id)
+          .eq('date', today)
+          .maybeSingle();
 
-          if (data && !error) {
-            setCurrentSteps(data.steps || 0);
-          }
-        } catch (error) {
-          console.error('Error loading today steps:', error);
+        if (data && !error) {
+          setCurrentSteps(data.steps || 0);
         }
+      } catch (error) {
+        console.error('Error loading today steps:', error);
       }
     };
 
     loadTodaySteps();
-  }, [user]);
+  }, [user, initialized]);
 
   return {
     currentSteps,

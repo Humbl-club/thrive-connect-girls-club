@@ -14,19 +14,24 @@ export function StepWidgetSmall() {
     startDeviceTracking 
   } = useStepCount();
   
-  // Try to start device tracking on component mount, but don't show errors here
+  // Try to start device tracking on component mount, but don't block
   useEffect(() => {
     const initTracking = async () => {
       try {
+        console.log('StepWidgetSmall: Attempting to start device tracking...');
         await startDeviceTracking();
+        console.log('StepWidgetSmall: Device tracking started successfully');
       } catch (error) {
-        // Silently fail - errors will be handled by the tracking hook
-        console.log("Automatic step tracking not available");
+        console.log('StepWidgetSmall: Automatic step tracking not available:', error);
       }
     };
     
-    initTracking();
+    // Use a short delay to prevent blocking the UI
+    const timer = setTimeout(initTracking, 100);
+    return () => clearTimeout(timer);
   }, [startDeviceTracking]);
+  
+  console.log('StepWidgetSmall render:', { currentSteps, dailyGoal, loading });
   
   return (
     <div className="bg-white rounded-xl girls-shadow p-4">
@@ -53,7 +58,7 @@ export function StepWidgetSmall() {
       
       <div className="flex flex-col items-center justify-center">
         <StepCounter
-          currentSteps={loading ? 0 : currentSteps}
+          currentSteps={currentSteps}
           goalSteps={dailyGoal}
           size="md"
         />
@@ -69,6 +74,12 @@ export function StepWidgetSmall() {
             <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
               <AlertCircle className="h-3 w-3" />
               Use manual entry if needed
+            </p>
+          )}
+          
+          {loading && (
+            <p className="text-xs text-muted-foreground mt-1">
+              Loading steps...
             </p>
           )}
         </div>

@@ -10,6 +10,7 @@ import { AnalyticsProvider } from "@/hooks/use-analytics";
 import { AuthProvider } from "@/components/auth/AuthProvider";
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute";
 import { ProfileProtectedRoute } from "@/components/auth/ProfileProtectedRoute";
+import { AdminProtectedRoute } from "@/components/auth/AdminProtectedRoute"; // NEW
 
 import Index from "./pages/Index";
 import Profile from "./pages/Profile";
@@ -21,6 +22,7 @@ import Analytics from "./pages/Analytics";
 import Social from "./pages/Social";
 import Auth from "./pages/Auth";
 import ProfileSetup from "./pages/ProfileSetup";
+import AdminDashboard from "./pages/AdminDashboard"; // NEW
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,8 +30,8 @@ const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <ThemeProvider>
-      <AuthProvider>
-        <SettingsProvider>
+      <SettingsProvider>
+        <AuthProvider>
           <AnalyticsProvider>
             <TooltipProvider>
               <Toaster />
@@ -37,58 +39,27 @@ const App = () => (
               <BrowserRouter>
                 <Routes>
                   <Route path="/auth" element={<Auth />} />
-                  <Route path="/profile-setup" element={
-                    <ProtectedRoute>
-                      <ProfileSetup />
-                    </ProtectedRoute>
-                  } />
-                  <Route path="/feed" element={
-                    <ProfileProtectedRoute>
-                      <Feed />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/" element={
-                    <ProfileProtectedRoute>
-                      <Index />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/profile" element={
-                    <ProfileProtectedRoute>
-                      <Profile />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/challenges" element={
-                    <ProfileProtectedRoute>
-                      <Challenges />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/calendar" element={
-                    <ProfileProtectedRoute>
-                      <Calendar />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/settings" element={
-                    <ProfileProtectedRoute>
-                      <Settings />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/analytics" element={
-                    <ProfileProtectedRoute>
-                      <Analytics />
-                    </ProfileProtectedRoute>
-                  } />
-                  <Route path="/social" element={
-                    <ProfileProtectedRoute>
-                      <Social />
-                    </ProfileProtectedRoute>
-                  } />
+                  <Route path="/profile-setup" element={<ProtectedRoute><ProfileSetup /></ProtectedRoute>} />
+                  
+                  <Route path="/" element={<ProfileProtectedRoute><Index /></ProfileProtectedRoute>} />
+                  <Route path="/profile" element={<ProfileProtectedRoute><Profile /></ProfileProtectedRoute>} />
+                  <Route path="/challenges" element={<ProfileProtectedRoute><Challenges /></ProfileProtectedRoute>} />
+                  <Route path="/calendar" element={<ProfileProtectedRoute><Calendar /></ProfileProtectedRoute>} />
+                  <Route path="/feed" element={<ProfileProtectedRoute><Feed /></ProfileProtectedRoute>} />
+                  <Route path="/settings" element={<ProfileProtectedRoute><Settings /></ProfileProtectedRoute>} />
+                  <Route path="/analytics" element={<ProfileProtectedRoute><Analytics /></ProfileProtectedRoute>} />
+                  <Route path="/social" element={<ProfileProtectedRoute><Social /></ProfileProtectedRoute>} />
+                  
+                  {/* NEW: Admin Route */}
+                  <Route path="/admin" element={<AdminProtectedRoute><AdminDashboard /></AdminProtectedRoute>} />
+
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
             </TooltipProvider>
           </AnalyticsProvider>
-        </SettingsProvider>
-      </AuthProvider>
+        </AuthProvider>
+      </SettingsProvider>
     </ThemeProvider>
   </QueryClientProvider>
 );

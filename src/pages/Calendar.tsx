@@ -11,32 +11,23 @@ import { useAuth } from "@/components/auth/AuthProvider";
 import { useToast } from "@/hooks/use-toast";
 
 export default function Calendar() {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth(); // Use isAdmin hook
   const { toast } = useToast();
   const [view, setView] = useState<"calendar" | "list">("calendar");
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [events, setEvents] = useState<CalendarEvent[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchEvents();
-  }, [user]);
-
   const fetchEvents = async () => {
-    if (!user) return;
-    
     try {
       setLoading(true);
-      
       const { data: eventsData, error } = await supabase
         .from('calendar_events')
         .select('*')
-        .eq('user_id', user.id)
         .order('event_date', { ascending: true });
 
       if (error) throw error;
 
-      // Transform data to match CalendarEvent interface
       const transformedEvents: CalendarEvent[] = eventsData.map(event => ({
         id: event.id,
         title: event.title,
@@ -50,34 +41,15 @@ export default function Calendar() {
 
       setEvents(transformedEvents);
     } catch (error: any) {
-      console.error("Error fetching events:", error);
-      toast({
-        title: "Error",
-        description: "Failed to load events",
-        variant: "destructive"
-      });
+      toast({ title: "Error", description: "Failed to load events", variant: "destructive" });
     } finally {
       setLoading(false);
     }
   };
 
-  const handleEventCreated = () => {
-    fetchEvents(); // Refresh events when a new one is created
-  };
-
-  if (loading) {
-    return (
-      <ProfileProtectedRoute>
-        <AppLayout>
-          <div className="container max-w-4xl mx-auto px-4 py-6">
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading calendar...</p>
-            </div>
-          </div>
-        </AppLayout>
-      </ProfileProtectedRoute>
-    );
-  }
+  useEffect(() => {
+    fetchEvents();
+  }, []);
 
   return (
     <ProfileProtectedRoute>
@@ -85,16 +57,18 @@ export default function Calendar() {
         <div className="container max-w-4xl mx-auto px-4 py-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-2xl font-bold">Calendar</h1>
-            <ViewToggle view={view} setView={setView} />
+            <div className="flex items-center gap-4">
+              {isAdmin && view === 'calendar' && (
+                <CalendarView events={[]} date={date} setDate={setDate} onEventCreated={fetchEvents} />
+              )}
+              <ViewToggle view={view} setView={setView} />
+            </div>
           </div>
-
-          {view === "calendar" ? (
-            <CalendarView 
-              events={events} 
-              date={date} 
-              setDate={setDate}
-              onEventCreated={handleEventCreated}
-            />
+          
+          {loading ? (
+            <div className="text-center py-12 text-muted-foreground">Loading calendar...</div>
+          ) : view === "calendar" ? (
+            <CalendarView events={events} date={date} setDate={setDate} onEventCreated={isAdmin ? fetchEvents : undefined} />
           ) : (
             <ListView events={events} />
           )}

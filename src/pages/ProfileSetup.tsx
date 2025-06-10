@@ -1,10 +1,10 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,7 +21,6 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Create a schema for form validation - make instagram handle optional
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
@@ -33,7 +32,6 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-// Popular cities for autocomplete
 const popularCities = [
   "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
   "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
@@ -71,7 +69,7 @@ export default function ProfileSetup() {
 
     const filtered = popularCities.filter(city => 
       city.toLowerCase().includes(value.toLowerCase())
-    );
+    ).slice(0, 5); // Limit to 5 results for better performance
     setFilteredCities(filtered);
     setShowCities(filtered.length > 0);
   };
@@ -79,6 +77,7 @@ export default function ProfileSetup() {
   const selectCity = (city: string) => {
     form.setValue("location", city);
     setShowCities(false);
+    setFilteredCities([]);
   };
 
   const handleSubmit = async (values: FormValues) => {
@@ -96,7 +95,6 @@ export default function ProfileSetup() {
       setLoading(true);
       console.log("Starting profile update with values:", values);
 
-      // Update the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -115,8 +113,6 @@ export default function ProfileSetup() {
       }
 
       console.log("Profile updated successfully");
-
-      // Refresh the profile in the context to get the updated data
       await refreshProfile();
 
       toast({
@@ -126,7 +122,6 @@ export default function ProfileSetup() {
 
       console.log("Profile refreshed, navigating...");
       
-      // Navigate based on user role
       if (isAdmin) {
         navigate("/admin", { replace: true });
       } else {
@@ -147,10 +142,10 @@ export default function ProfileSetup() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
-      <div className="w-full max-w-md space-y-8 p-8 bg-white rounded-xl shadow-lg dark:bg-gray-800">
+      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg">
         <div className="text-center">
           <User className="mx-auto h-12 w-12 text-primary" />
-          <h1 className="text-3xl font-bold mt-4">Complete Your Profile</h1>
+          <h1 className="text-3xl font-bold mt-4 text-foreground">Complete Your Profile</h1>
           <p className="text-muted-foreground mt-2">
             Let's set up your fitness profile to get started
           </p>
@@ -247,7 +242,7 @@ export default function ProfileSetup() {
                       <FormLabel>City (Optional)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
                           <Input
                             placeholder="New York, NY"
                             className="pl-10"
@@ -261,13 +256,17 @@ export default function ProfileSetup() {
                                 setShowCities(true);
                               }
                             }}
+                            onBlur={() => {
+                              // Delay hiding to allow click on dropdown items
+                              setTimeout(() => setShowCities(false), 200);
+                            }}
                           />
-                          {showCities && (
-                            <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md mt-1 max-h-48 overflow-y-auto">
+                          {showCities && filteredCities.length > 0 && (
+                            <ul className="absolute z-50 w-full bg-card border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
                               {filteredCities.map((city) => (
                                 <li 
                                   key={city}
-                                  className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
+                                  className="px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm"
                                   onClick={() => selectCity(city)}
                                 >
                                   {city}

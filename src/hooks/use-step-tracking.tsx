@@ -10,6 +10,7 @@ export const useStepTracking = () => {
   const [isTracking, setIsTracking] = useState(false);
   const [connectedSources, setConnectedSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [trackingDisabled, setTrackingDisabled] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -45,8 +46,24 @@ export const useStepTracking = () => {
     stepTracker.setStepCountCallback(handleStepUpdate);
   }, [handleStepUpdate]);
 
+  // Show error and disable tracking
+  const disableTrackingWithError = useCallback((message: string) => {
+    setTrackingDisabled(true);
+    setIsTracking(false);
+    setLoading(false);
+    stepTracker.stopTracking();
+    
+    toast({
+      title: "Step Tracking Unavailable",
+      description: message,
+      variant: "destructive"
+    });
+  }, [toast]);
+
   // Connect to device pedometer
   const connectDevice = async () => {
+    if (trackingDisabled) return;
+    
     setLoading(true);
     try {
       const success = await stepTracker.startDeviceTracking();
@@ -58,18 +75,10 @@ export const useStepTracking = () => {
           description: "Successfully connected to device pedometer"
         });
       } else {
-        toast({
-          title: "Connection Failed",
-          description: "Could not access device pedometer. Please check permissions.",
-          variant: "destructive"
-        });
+        disableTrackingWithError("Device step tracking is not available on this device or browser. Please try manual step entry instead.");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect to device pedometer",
-        variant: "destructive"
-      });
+      disableTrackingWithError("Step tracking cannot be accessed. Please use manual step entry.");
     } finally {
       setLoading(false);
     }
@@ -77,6 +86,8 @@ export const useStepTracking = () => {
 
   // Connect to Apple Health
   const connectAppleHealth = async () => {
+    if (trackingDisabled) return;
+    
     setLoading(true);
     try {
       const success = await stepTracker.connectAppleHealth();
@@ -87,18 +98,10 @@ export const useStepTracking = () => {
           description: "Successfully connected to Apple Health"
         });
       } else {
-        toast({
-          title: "Connection Failed",
-          description: "Could not connect to Apple Health. Make sure you're on iOS and have granted permissions.",
-          variant: "destructive"
-        });
+        disableTrackingWithError("Apple Health is not available. This feature requires iOS 16+ and installation as a web app.");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect to Apple Health",
-        variant: "destructive"
-      });
+      disableTrackingWithError("Apple Health connection failed. Please use manual step entry.");
     } finally {
       setLoading(false);
     }
@@ -106,6 +109,8 @@ export const useStepTracking = () => {
 
   // Connect to Google Fit
   const connectGoogleFit = async () => {
+    if (trackingDisabled) return;
+    
     setLoading(true);
     try {
       // Configure Google Fit client ID (you'll need to get this from Google Cloud Console)
@@ -121,18 +126,10 @@ export const useStepTracking = () => {
           description: "Successfully connected to Google Fit"
         });
       } else {
-        toast({
-          title: "Connection Failed",
-          description: "Could not connect to Google Fit. Please try again.",
-          variant: "destructive"
-        });
+        disableTrackingWithError("Google Fit connection is not configured. Please use manual step entry.");
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect to Google Fit",
-        variant: "destructive"
-      });
+      disableTrackingWithError("Google Fit is not available. Please use manual step entry.");
     } finally {
       setLoading(false);
     }
@@ -140,6 +137,8 @@ export const useStepTracking = () => {
 
   // Connect to Fitbit
   const connectFitbit = async () => {
+    if (trackingDisabled) return;
+    
     setLoading(true);
     try {
       // Configure Fitbit client ID (you'll need to get this from Fitbit Dev Console)
@@ -149,18 +148,13 @@ export const useStepTracking = () => {
       
       const success = await stepTracker.connectFitbit();
       if (success) {
-        // Note: This will redirect to Fitbit auth, so we don't set state here
         toast({
           title: "Redirecting to Fitbit",
           description: "You'll be redirected to authorize Fitbit access"
         });
       }
     } catch (error) {
-      toast({
-        title: "Error",
-        description: "Failed to connect to Fitbit",
-        variant: "destructive"
-      });
+      disableTrackingWithError("Fitbit connection is not available. Please use manual step entry.");
     } finally {
       setLoading(false);
     }
@@ -203,6 +197,7 @@ export const useStepTracking = () => {
     isTracking,
     connectedSources,
     loading,
+    trackingDisabled,
     connectDevice,
     connectAppleHealth,
     connectGoogleFit,

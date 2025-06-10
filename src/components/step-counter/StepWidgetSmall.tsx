@@ -2,7 +2,7 @@
 import { useEffect } from "react";
 import { StepCounter } from "@/components/ui/step-counter";
 import { Button } from "@/components/ui/button";
-import { Footprints, MoreHorizontal, Settings } from "lucide-react";
+import { Footprints, MoreHorizontal, Settings, AlertCircle } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useStepCount } from "@/hooks/use-step-count"; 
 
@@ -14,13 +14,14 @@ export function StepWidgetSmall() {
     startDeviceTracking 
   } = useStepCount();
   
-  // Try to start device tracking on component mount
+  // Try to start device tracking on component mount, but don't show errors here
   useEffect(() => {
     const initTracking = async () => {
       try {
         await startDeviceTracking();
       } catch (error) {
-        console.error("Could not automatically start step tracking:", error);
+        // Silently fail - errors will be handled by the tracking hook
+        console.log("Automatic step tracking not available");
       }
     };
     
@@ -63,6 +64,13 @@ export function StepWidgetSmall() {
               {Math.round((currentSteps / dailyGoal) * 100)}%
             </span> of daily goal
           </p>
+          
+          {currentSteps === 0 && !loading && (
+            <p className="text-xs text-muted-foreground mt-1 flex items-center justify-center gap-1">
+              <AlertCircle className="h-3 w-3" />
+              Use manual entry if needed
+            </p>
+          )}
         </div>
       </div>
     </div>

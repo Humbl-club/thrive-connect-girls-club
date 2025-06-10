@@ -11,12 +11,13 @@ export function ProfileProtectedRoute({
   children, 
   requiresProfile = true 
 }: ProfileProtectedRouteProps) {
-  const { user, profile, loading } = useAuth();
+  const { user, profile, loading, isAdmin } = useAuth();
   
   console.log("ProfileProtectedRoute - State:", { 
     loading, 
     hasUser: !!user, 
     hasProfile: !!profile,
+    isAdmin,
     profileData: profile 
   });
   
@@ -36,6 +37,12 @@ export function ProfileProtectedRoute({
     return <Navigate to="/auth" replace />;
   }
 
+  // If user is admin, allow access regardless of profile completeness
+  if (isAdmin) {
+    console.log("ProfileProtectedRoute - Admin user, allowing access");
+    return <>{children}</>;
+  }
+
   // If we require a profile, check if setup is needed
   if (requiresProfile) {
     // If no profile exists at all, redirect to setup
@@ -44,14 +51,13 @@ export function ProfileProtectedRoute({
       return <Navigate to="/profile-setup" replace />;
     }
     
-    // Check if profile is incomplete (missing required fields)
-    const isProfileIncomplete = !profile.full_name || !profile.username || !profile.instagram_handle;
+    // Check if profile is incomplete - only require essential fields
+    const isProfileIncomplete = !profile.full_name || !profile.username;
     
     if (isProfileIncomplete) {
       console.log("ProfileProtectedRoute - Profile incomplete, redirecting to setup. Missing:", {
         full_name: !profile.full_name,
-        username: !profile.username,
-        instagram_handle: !profile.instagram_handle
+        username: !profile.username
       });
       return <Navigate to="/profile-setup" replace />;
     }

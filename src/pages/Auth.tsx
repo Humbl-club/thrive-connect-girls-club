@@ -24,11 +24,16 @@ export default function Auth() {
     if (authLoading) return;
 
     if (user) {
+      console.log("Auth page - User found:", { user: !!user, profile, isAdmin });
+      
       if (isAdmin) {
+        console.log("Auth page - Redirecting admin to admin dashboard");
         navigate("/admin", { replace: true });
       } else if (profile && profile.full_name && profile.username) {
+        console.log("Auth page - Profile complete, redirecting to home");
         navigate("/", { replace: true });
       } else {
+        console.log("Auth page - Profile incomplete, redirecting to setup");
         navigate("/profile-setup", { replace: true });
       }
     }
@@ -44,11 +49,20 @@ export default function Auth() {
     setLoading(true);
     try {
       if (isLogin) {
+        console.log("Attempting login for:", email);
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
         toast({ title: "Welcome back!", description: "You've been successfully logged in." });
       } else {
-        const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: fullName } } });
+        console.log("Attempting signup for:", email);
+        const { data, error } = await supabase.auth.signUp({ 
+          email, 
+          password, 
+          options: { 
+            data: { full_name: fullName },
+            emailRedirectTo: `${window.location.origin}/`
+          } 
+        });
         if (error) throw error;
         if (data.user && !data.session) {
           toast({ title: "Check your email", description: "We sent a confirmation link to complete your registration." });
@@ -57,6 +71,7 @@ export default function Auth() {
         }
       }
     } catch (error: any) {
+      console.error("Auth error:", error);
       const defaultMessage = isLogin ? "Sign in failed" : "Sign up failed";
       toast({ title: defaultMessage, description: error.message, variant: "destructive" });
     } finally {

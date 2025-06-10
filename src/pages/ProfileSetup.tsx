@@ -21,11 +21,11 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-// Create a schema for form validation
+// Create a schema for form validation - make instagram handle optional
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
-  instagramHandle: z.string().min(2, "Instagram handle is required"),
+  instagramHandle: z.string().optional(),
   bio: z.string().optional(),
   location: z.string().optional(),
   birthDate: z.string().optional()
@@ -46,7 +46,7 @@ export default function ProfileSetup() {
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showCities, setShowCities] = useState(false);
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, isAdmin } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -84,6 +84,11 @@ export default function ProfileSetup() {
   const handleSubmit = async (values: FormValues) => {
     if (!user) {
       console.error("No user found in ProfileSetup");
+      toast({
+        title: "Error",
+        description: "No user session found. Please try logging in again.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -100,7 +105,7 @@ export default function ProfileSetup() {
           bio: values.bio || null,
           location: values.location || null,
           birth_date: values.birthDate || null,
-          instagram_handle: values.instagramHandle
+          instagram_handle: values.instagramHandle || null
         })
         .eq('id', user.id);
 
@@ -119,10 +124,14 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      console.log("Profile refreshed, navigating to feed...");
+      console.log("Profile refreshed, navigating...");
       
-      // Navigate to feed immediately
-      navigate("/feed", { replace: true });
+      // Navigate based on user role
+      if (isAdmin) {
+        navigate("/admin", { replace: true });
+      } else {
+        navigate("/", { replace: true });
+      }
 
     } catch (error: any) {
       console.error("Profile setup error:", error);
@@ -196,7 +205,7 @@ export default function ProfileSetup() {
                   name="instagramHandle"
                   render={({ field }) => (
                     <FormItem className="space-y-2">
-                      <FormLabel>Instagram Handle *</FormLabel>
+                      <FormLabel>Instagram Handle (Optional)</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -204,7 +213,6 @@ export default function ProfileSetup() {
                             placeholder="@johndoe"
                             className="pl-10"
                             {...field}
-                            required
                           />
                         </div>
                       </FormControl>

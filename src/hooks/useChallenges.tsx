@@ -10,8 +10,10 @@ export type Challenge = Tables<'challenges'> & {
   userProgress?: number;
   isJoined?: boolean;
   status: "upcoming" | "active" | "completed";
-  type: "steps" | "distance" | "active_minutes";
-  visibility: "public" | "friends" | "private";
+  // Map database fields to expected component fields
+  startDate: string;
+  endDate: string;
+  createdBy: string;
 };
 
 export function useChallenges() {
@@ -66,8 +68,13 @@ export function useChallenges() {
           isJoined: user ? userParticipantsMap.has(dbChallenge.id) : false,
           userProgress: user ? userParticipantsMap.get(dbChallenge.id) ?? undefined : undefined,
           status,
-          type: dbChallenge.type as Challenge['type'] || 'steps',
-          visibility: dbChallenge.visibility as Challenge['visibility'] || 'public',
+          // Map database fields to component expected fields
+          startDate: dbChallenge.start_date,
+          endDate: dbChallenge.end_date,
+          createdBy: dbChallenge.created_by,
+          // Ensure these fields have defaults since they were just added to the database
+          type: (dbChallenge.type as "steps" | "distance" | "active_minutes") || 'steps',
+          visibility: (dbChallenge.visibility as "public" | "friends" | "private") || 'public',
           goal: dbChallenge.goal || 10000,
         };
       });

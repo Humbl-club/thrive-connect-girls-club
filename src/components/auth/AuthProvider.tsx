@@ -1,3 +1,4 @@
+
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -22,9 +23,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   const fetchUserProfile = async (currentUser: User) => {
     try {
+      console.log("Fetching profile for user:", currentUser.id);
       const { data: userProfile, error } = await supabase
         .from('profiles')
         .select('*')
@@ -38,8 +41,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (userProfile) {
+        console.log("Profile found:", userProfile);
         setProfile(userProfile as Profile);
       } else {
+        console.log("No profile found, creating one...");
         const username = currentUser.email ? currentUser.email.split('@')[0] : `user_${Date.now()}`;
         
         const { data: newProfile, error: insertError } = await supabase
@@ -70,6 +75,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           };
           setProfile(fallbackProfile);
         } else if (newProfile) {
+          console.log("Profile created:", newProfile);
           setProfile(newProfile as Profile);
         } else {
           setProfile(null);
@@ -89,9 +95,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, currentSession) => {
+    console.log("AuthProvider: Setting up auth state listener");
+    
+    // Get initial session first
+    const getInitialSession = async () => {
+      try {
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting initial session:", error);
+        }
+        
         if (!isMounted) return;
+        
+        console.log("Initial session check:", { 
+          hasSession: !!initialSession, 
+          hasUser: !!initialSession?.user 
+        });
+        
+        if (initialSession?.user) {
+          setSession(initialSession);
+          setUser(initialSession.user);
+          await fetchUserProfile(initialSession.user);
+        } else {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        setInitialCheckDone(true);
+        setLoading(false);
+      } catch (error) {
+        console.error("Error in getInitialSession:", error);
+        if (isMounted) {
+          setInitialCheckDone(true);
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state change listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log("Auth state change:", event, { 
+          hasSession: !!currentSession, 
+          hasUser: !!currentSession?.user 
+        });
+        
+        if (!isMounted) return;
+        
+        // Only process auth changes after initial check is done
+        if (!initialCheckDone) return;
         
         setLoading(true);
         
@@ -109,17 +163,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     );
 
-    supabase.auth.getSession().then(async ({ data: { session: initialSession } }) => {
-      if (!isMounted) return;
-      if (initialSession?.user) {
-        setSession(initialSession);
-        setUser(initialSession.user);
-        await fetchUserProfile(initialSession.user);
-      }
-      setLoading(false);
-    });
+    // Get initial session
+    getInitialSession();
 
     return () => {
+      console.log("AuthProvider: Cleaning up");
       isMounted = false;
       subscription.unsubscribe();
     };
@@ -129,8 +177,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await supabase.auth.signOut();
   };
 
+  const value = {
+    session,
+    user,
+    profile,
+    loading,
+    signOut,
+    refreshProfile
+  };
+
+  console.log("AuthProvider rendering with state:", {
+    loading,
+    hasUser: !!user,
+    hasProfile: !!profile,
+    initialCheckDone
+  });
+
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={value}>
       {children}
     </AuthContext.Provider>
   );

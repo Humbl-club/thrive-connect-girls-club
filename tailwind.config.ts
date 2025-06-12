@@ -70,6 +70,13 @@ export default {
 					light: '#F8F9FC',
 					dark: '#2D3748',
 				},
+				brand: {
+					navy: 'hsl(var(--brand-navy))',
+					'navy-light': 'hsl(var(--brand-navy-light))',
+					light: 'hsl(var(--brand-light))',
+					accent: 'hsl(var(--brand-accent))',
+					gray: 'hsl(var(--brand-gray))',
+				},
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

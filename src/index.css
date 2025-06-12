@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 280 80% 53%;
+    --primary: 220 60% 25%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 326 73% 70%;
@@ -32,9 +32,16 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 280 80% 53%;
+    --ring: 220 60% 25%;
 
     --radius: 1rem;
+
+    /* Brand colors from brand book */
+    --brand-navy: 220 60% 25%;
+    --brand-navy-light: 220 40% 35%;
+    --brand-light: 220 20% 95%;
+    --brand-accent: 174 53% 40%;
+    --brand-gray: 220 10% 60%;
   }
 
   .dark {
@@ -48,7 +55,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 280 80% 53%;
+    --primary: 220 60% 35%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 326 73% 70%;
@@ -65,7 +72,14 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 280 80% 53%;
+    --ring: 220 60% 35%;
+
+    /* Brand colors for dark mode */
+    --brand-navy: 220 60% 35%;
+    --brand-navy-light: 220 40% 45%;
+    --brand-light: 220 20% 15%;
+    --brand-accent: 174 53% 50%;
+    --brand-gray: 220 10% 70%;
   }
 }
 

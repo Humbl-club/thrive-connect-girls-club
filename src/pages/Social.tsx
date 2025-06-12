@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,7 @@ import { FriendsList } from "@/components/social/FriendsList";
 import { CreateChallenge } from "@/components/challenges/CreateChallenge";
 import { LeaderboardCard } from "@/components/challenges/LeaderboardCard";
 import { FeedPost } from "@/components/feed/FeedPost";
+import { FeedPostForm } from "@/components/feed/FeedPostForm";
 import { Users, Trophy, MessageSquare, Loader2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
@@ -184,33 +184,42 @@ const Social = () => {
       description: "Load more functionality is under development",
     });
   };
+
+  const handlePostCreated = () => {
+    setLoading(true);
+    // Refresh posts when a new post is created
+  };
   
   return (
     <AppLayout>
       <div className="container px-4 py-6 pb-20 max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold">Social</h1>
-          <Button variant="outline" size="icon" className="rounded-full">
+          <h1 className="text-2xl font-bold text-brand-navy">Social</h1>
+          <Button variant="outline" size="icon" className="rounded-full border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white">
             <MessageSquare className="h-5 w-5" />
           </Button>
         </div>
         
         <Tabs defaultValue="feed">
-          <TabsList className="grid w-full grid-cols-3 mb-4">
-            <TabsTrigger value="feed">Feed</TabsTrigger>
-            <TabsTrigger value="friends">Friends</TabsTrigger>
-            <TabsTrigger value="challenges">Challenges</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 mb-4 bg-brand-light border border-brand-navy/20">
+            <TabsTrigger value="feed" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Feed</TabsTrigger>
+            <TabsTrigger value="friends" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Friends</TabsTrigger>
+            <TabsTrigger value="challenges" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Challenges</TabsTrigger>
           </TabsList>
           
           <TabsContent value="feed" className="space-y-6 animate-enter">
+            <div className="mb-6">
+              <FeedPostForm onPostCreated={handlePostCreated} />
+            </div>
+            
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10">
-                <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-                <p className="text-muted-foreground">Loading posts...</p>
+                <Loader2 className="h-8 w-8 text-brand-navy animate-spin mb-4" />
+                <p className="text-brand-navy/70">Loading posts...</p>
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-10">
-                <p className="text-muted-foreground">No posts yet.</p>
+                <p className="text-brand-navy/70">No posts yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -218,7 +227,7 @@ const Social = () => {
                   <FeedPost key={post.id} {...post} />
                 ))}
                 
-                <Button variant="outline" className="w-full" onClick={handleLoadMore}>
+                <Button variant="outline" className="w-full border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white" onClick={handleLoadMore}>
                   Load More
                 </Button>
               </div>
@@ -231,14 +240,14 @@ const Social = () => {
           
           <TabsContent value="challenges" className="space-y-6 animate-enter">
             <div>
-              <h2 className="font-semibold text-lg mb-3 flex items-center">
-                <Trophy className="h-5 w-5 mr-2 text-primary" /> Active Challenges
+              <h2 className="font-semibold text-lg mb-3 flex items-center text-brand-navy">
+                <Trophy className="h-5 w-5 mr-2 text-brand-accent" /> Active Challenges
               </h2>
               
               {loadingLeaderboard ? (
                 <div className="flex flex-col items-center justify-center py-10">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin mb-4" />
-                  <p className="text-muted-foreground">Loading challenges...</p>
+                  <Loader2 className="h-8 w-8 text-brand-navy animate-spin mb-4" />
+                  <p className="text-brand-navy/70">Loading challenges...</p>
                 </div>
               ) : (
                 <div className="space-y-4">

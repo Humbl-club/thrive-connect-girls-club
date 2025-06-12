@@ -7,7 +7,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Trophy, Users, Calendar, Target } from "lucide-react";
 import { format } from "date-fns";
-import type { Challenge } from "@/hooks/useChallenges";
+
+interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  goal: number;
+  type: "steps" | "distance" | "active_minutes";
+  startDate: string;
+  endDate: string;
+  visibility: "public" | "friends" | "private";
+  createdBy: string;
+  participantCount: number;
+  userProgress?: number;
+  isJoined?: boolean;
+  status: "upcoming" | "active" | "completed";
+}
 
 interface ChallengeCardProps {
   challenge: Challenge;
@@ -104,7 +119,7 @@ export function ChallengeCard({ challenge, onJoin, onLeave, onViewDetails }: Cha
         <div className="grid grid-cols-2 gap-4 text-sm">
           <div className="flex items-center gap-2">
             <Target className="h-4 w-4 text-muted-foreground" />
-            <span>Goal: {challenge.goal?.toLocaleString() || 0}</span>
+            <span>Goal: {challenge.goal.toLocaleString()}</span>
           </div>
           <div className="flex items-center gap-2">
             <Users className="h-4 w-4 text-muted-foreground" />
@@ -125,7 +140,7 @@ export function ChallengeCard({ challenge, onJoin, onLeave, onViewDetails }: Cha
           <div className="space-y-2">
             <div className="flex justify-between text-sm">
               <span>Your Progress</span>
-              <span>{challenge.userProgress.toLocaleString()} / {challenge.goal?.toLocaleString() || 0}</span>
+              <span>{challenge.userProgress.toLocaleString()} / {challenge.goal.toLocaleString()}</span>
             </div>
             <Progress value={progressPercentage} className="h-2" />
             <div className="text-xs text-muted-foreground text-center">

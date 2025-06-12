@@ -102,36 +102,34 @@ export function FeedPost({
   };
 
   return (
-    <div className={cn("bg-white rounded-xl shadow-sm p-4 border border-gray-100", className)} style={style}>
+    <div className={cn("bg-white rounded-xl shadow-sm p-4", className)} style={style}>
       <div className="flex justify-between items-start mb-3">
         <div className="flex items-center gap-2">
           <Avatar className="h-10 w-10">
             {user.avatarUrl ? (
               <AvatarImage src={user.avatarUrl} alt={user.username} />
             ) : (
-              <AvatarFallback className="bg-brand-navy text-white font-medium">
-                {user.username[0].toUpperCase()}
-              </AvatarFallback>
+              <AvatarFallback>{user.username[0].toUpperCase()}</AvatarFallback>
             )}
           </Avatar>
           <div>
-            <p className="font-semibold text-sm text-text-primary">{user.username}</p>
-            <p className="text-xs text-text-muted">
+            <p className="font-medium text-sm text-black">{user.username}</p>
+            <p className="text-xs text-muted-foreground">
               {typeof createdAt === 'string' 
                 ? formatDistanceToNow(new Date(createdAt), { addSuffix: true })
                 : formatDistanceToNow(createdAt, { addSuffix: true })}
             </p>
           </div>
         </div>
-        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8 text-text-muted hover:text-text-primary">
+        <Button variant="ghost" size="icon" className="rounded-full h-8 w-8">
           <MoreHorizontal className="h-4 w-4" />
         </Button>
       </div>
 
-      {content && <p className="text-sm text-text-primary mb-3 whitespace-pre-line leading-relaxed">{content}</p>}
+      {content && <p className="text-sm text-black mb-3 whitespace-pre-line">{content}</p>}
 
       {imageUrl && (
-        <div className="mb-3 rounded-lg overflow-hidden border border-gray-100">
+        <div className="mb-3 rounded-lg overflow-hidden">
           <img
             src={imageUrl}
             alt="Post image"
@@ -145,23 +143,23 @@ export function FeedPost({
           variant="ghost"
           size="sm"
           className={cn(
-            "flex items-center gap-1 font-medium",
-            isLiked ? "text-rose-500 hover:text-rose-600" : "text-text-muted hover:text-text-primary"
+            "flex items-center gap-1",
+            isLiked ? "text-rose-500" : "text-muted-foreground"
           )}
           onClick={handleLike}
         >
           <Heart className={cn("h-4 w-4", isLiked && "fill-rose-500")} />
-          <span className="text-xs font-medium">{likeCount}</span>
+          <span className="text-xs text-black">{likeCount}</span>
         </Button>
 
         <Button
           variant="ghost"
           size="sm"
-          className="flex items-center gap-1 text-text-muted hover:text-text-primary font-medium"
+          className="flex items-center gap-1 text-muted-foreground"
           onClick={() => setShowComments(!showComments)}
         >
           <MessageSquare className="h-4 w-4" />
-          <span className="text-xs font-medium">{comments.length}</span>
+          <span className="text-xs text-black">{comments.length}</span>
         </Button>
       </div>
 

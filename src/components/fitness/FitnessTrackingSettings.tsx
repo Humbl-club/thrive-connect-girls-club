@@ -2,14 +2,13 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Smartphone, Watch, Activity, Heart, Loader2, AlertCircle } from "lucide-react";
+import { Smartphone, Watch, Activity, Heart, Loader2 } from "lucide-react";
 import { useStepTracking } from "@/hooks/use-step-tracking";
 
 export const FitnessTrackingSettings = () => {
   const {
     connectedSources,
     loading,
-    trackingDisabled,
     connectDevice,
     connectAppleHealth,
     connectGoogleFit,
@@ -24,7 +23,7 @@ export const FitnessTrackingSettings = () => {
       description: 'Use your phone\'s built-in step counter',
       icon: Smartphone,
       connect: connectDevice,
-      available: 'permissions' in navigator && !trackingDisabled
+      available: 'permissions' in navigator
     },
     {
       id: 'apple_health',
@@ -32,7 +31,7 @@ export const FitnessTrackingSettings = () => {
       description: 'Sync with Apple Health app (iOS only)',
       icon: Heart,
       connect: connectAppleHealth,
-      available: /iPad|iPhone|iPod/.test(navigator.userAgent) && !trackingDisabled
+      available: /iPad|iPhone|iPod/.test(navigator.userAgent)
     },
     {
       id: 'google_fit',
@@ -40,7 +39,7 @@ export const FitnessTrackingSettings = () => {
       description: 'Connect to Google Fit for step tracking',
       icon: Activity,
       connect: connectGoogleFit,
-      available: !trackingDisabled
+      available: true
     },
     {
       id: 'fitbit',
@@ -48,7 +47,7 @@ export const FitnessTrackingSettings = () => {
       description: 'Sync with your Fitbit device',
       icon: Watch,
       connect: connectFitbit,
-      available: !trackingDisabled
+      available: true
     }
   ];
 
@@ -61,21 +60,7 @@ export const FitnessTrackingSettings = () => {
         </p>
       </div>
 
-      {trackingDisabled && (
-        <Card className="border-orange-200 bg-orange-50">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-orange-800 flex items-center gap-2">
-              <AlertCircle className="h-5 w-5" />
-              Automatic Tracking Disabled
-            </CardTitle>
-            <CardDescription className="text-orange-700">
-              Step tracking is not available on this device. You can still manually enter your daily steps.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      )}
-
-      {isTracking && !trackingDisabled && (
+      {isTracking && (
         <Card className="border-green-200 bg-green-50">
           <CardHeader className="pb-3">
             <CardTitle className="text-green-800 flex items-center gap-2">
@@ -117,7 +102,7 @@ export const FitnessTrackingSettings = () => {
                     
                     {!source.available && (
                       <Badge variant="secondary">
-                        {trackingDisabled ? 'Disabled' : 'Not Available'}
+                        Not Available
                       </Badge>
                     )}
                   </div>
@@ -139,8 +124,6 @@ export const FitnessTrackingSettings = () => {
                     </>
                   ) : isConnected ? (
                     'Connected'
-                  ) : !source.available ? (
-                    trackingDisabled ? 'Tracking Disabled' : 'Not Available'
                   ) : (
                     `Connect ${source.name}`
                   )}
@@ -151,20 +134,18 @@ export const FitnessTrackingSettings = () => {
         })}
       </div>
 
-      {!trackingDisabled && (
-        <Card className="border-blue-200 bg-blue-50">
-          <CardContent className="pt-6">
-            <div className="text-sm text-blue-800">
-              <p className="font-medium mb-2">Setup Instructions:</p>
-              <ul className="space-y-1 text-xs">
-                <li>• For Google Fit and Fitbit, you'll need to configure API credentials</li>
-                <li>• Apple Health requires iOS 16+ and PWA installation</li>
-                <li>• Device pedometer works in supported browsers with permission</li>
-              </ul>
-            </div>
-          </CardContent>
-        </Card>
-      )}
+      <Card className="border-blue-200 bg-blue-50">
+        <CardContent className="pt-6">
+          <div className="text-sm text-blue-800">
+            <p className="font-medium mb-2">Setup Instructions:</p>
+            <ul className="space-y-1 text-xs">
+              <li>• For Google Fit and Fitbit, you'll need to configure API credentials</li>
+              <li>• Apple Health requires iOS 16+ and PWA installation</li>
+              <li>• Device pedometer works in supported browsers with permission</li>
+            </ul>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 };

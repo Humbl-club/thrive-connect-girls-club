@@ -1,10 +1,10 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/components/auth/AuthProvider";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
@@ -21,10 +21,11 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+// Create a schema for form validation
 const formSchema = z.object({
   fullName: z.string().min(2, "Full name must be at least 2 characters"),
   username: z.string().min(3, "Username must be at least 3 characters"),
-  instagramHandle: z.string().optional(),
+  instagramHandle: z.string().min(2, "Instagram handle is required"),
   bio: z.string().optional(),
   location: z.string().optional(),
   birthDate: z.string().optional()
@@ -32,6 +33,7 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+// Popular cities for autocomplete
 const popularCities = [
   "New York", "Los Angeles", "Chicago", "Houston", "Phoenix",
   "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose",
@@ -44,7 +46,7 @@ export default function ProfileSetup() {
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showCities, setShowCities] = useState(false);
   const navigate = useNavigate();
-  const { user, refreshProfile, isAdmin } = useAuth();
+  const { user, refreshProfile } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -69,7 +71,7 @@ export default function ProfileSetup() {
 
     const filtered = popularCities.filter(city => 
       city.toLowerCase().includes(value.toLowerCase())
-    ).slice(0, 5); // Limit to 5 results for better performance
+    );
     setFilteredCities(filtered);
     setShowCities(filtered.length > 0);
   };
@@ -77,17 +79,11 @@ export default function ProfileSetup() {
   const selectCity = (city: string) => {
     form.setValue("location", city);
     setShowCities(false);
-    setFilteredCities([]);
   };
 
   const handleSubmit = async (values: FormValues) => {
     if (!user) {
       console.error("No user found in ProfileSetup");
-      toast({
-        title: "Error",
-        description: "No user session found. Please try logging in again.",
-        variant: "destructive",
-      });
       return;
     }
 
@@ -95,6 +91,7 @@ export default function ProfileSetup() {
       setLoading(true);
       console.log("Starting profile update with values:", values);
 
+      // Update the profiles table
       const { error } = await supabase
         .from('profiles')
         .update({
@@ -103,7 +100,7 @@ export default function ProfileSetup() {
           bio: values.bio || null,
           location: values.location || null,
           birth_date: values.birthDate || null,
-          instagram_handle: values.instagramHandle || null
+          instagram_handle: values.instagramHandle
         })
         .eq('id', user.id);
 
@@ -113,6 +110,8 @@ export default function ProfileSetup() {
       }
 
       console.log("Profile updated successfully");
+
+      // Refresh the profile in the context to get the updated data
       await refreshProfile();
 
       toast({
@@ -120,13 +119,10 @@ export default function ProfileSetup() {
         description: "Welcome to the fitness app!",
       });
 
-      console.log("Profile refreshed, navigating...");
+      console.log("Profile refreshed, navigating to feed...");
       
-      if (isAdmin) {
-        navigate("/admin", { replace: true });
-      } else {
-        navigate("/", { replace: true });
-      }
+      // Navigate to feed immediately
+      navigate("/feed", { replace: true });
 
     } catch (error: any) {
       console.error("Profile setup error:", error);
@@ -142,10 +138,10 @@ export default function ProfileSetup() {
 
   return (
     <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-background">
-      <div className="w-full max-w-md space-y-8 p-8 bg-card rounded-xl shadow-lg">
+      <div className="w-full max-w-md space-y-8 p-8 bg-white rounded-xl shadow-lg dark:bg-gray-800">
         <div className="text-center">
           <User className="mx-auto h-12 w-12 text-primary" />
-          <h1 className="text-3xl font-bold mt-4 text-foreground">Complete Your Profile</h1>
+          <h1 className="text-3xl font-bold mt-4">Complete Your Profile</h1>
           <p className="text-muted-foreground mt-2">
             Let's set up your fitness profile to get started
           </p>
@@ -200,7 +196,7 @@ export default function ProfileSetup() {
                   name="instagramHandle"
                   render={({ field }) => (
                     <FormItem className="space-y-2">
-                      <FormLabel>Instagram Handle (Optional)</FormLabel>
+                      <FormLabel>Instagram Handle *</FormLabel>
                       <FormControl>
                         <div className="relative">
                           <Instagram className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -208,6 +204,7 @@ export default function ProfileSetup() {
                             placeholder="@johndoe"
                             className="pl-10"
                             {...field}
+                            required
                           />
                         </div>
                       </FormControl>
@@ -242,7 +239,7 @@ export default function ProfileSetup() {
                       <FormLabel>City (Optional)</FormLabel>
                       <FormControl>
                         <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground z-10" />
+                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                           <Input
                             placeholder="New York, NY"
                             className="pl-10"
@@ -256,17 +253,13 @@ export default function ProfileSetup() {
                                 setShowCities(true);
                               }
                             }}
-                            onBlur={() => {
-                              // Delay hiding to allow click on dropdown items
-                              setTimeout(() => setShowCities(false), 200);
-                            }}
                           />
-                          {showCities && filteredCities.length > 0 && (
-                            <ul className="absolute z-50 w-full bg-card border border-border rounded-md mt-1 max-h-48 overflow-y-auto shadow-lg">
+                          {showCities && (
+                            <ul className="absolute z-10 w-full bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-md mt-1 max-h-48 overflow-y-auto">
                               {filteredCities.map((city) => (
                                 <li 
                                   key={city}
-                                  className="px-4 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer text-sm"
+                                  className="px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer"
                                   onClick={() => selectCity(city)}
                                 >
                                   {city}

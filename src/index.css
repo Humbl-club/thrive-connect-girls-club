@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 220 60% 25%;
+    --primary: 280 80% 53%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 326 73% 70%;
@@ -32,22 +32,9 @@
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 220 60% 25%;
+    --ring: 280 80% 53%;
 
     --radius: 1rem;
-
-    /* Brand colors from brand book - Enhanced contrast */
-    --brand-navy: 220 60% 25%;
-    --brand-navy-light: 220 40% 35%;
-    --brand-light: 220 20% 95%;
-    --brand-accent: 174 53% 40%;
-    --brand-gray: 220 10% 60%;
-    
-    /* Text variants for better visibility */
-    --text-primary: 220 60% 15%; /* Darker for better contrast */
-    --text-secondary: 220 40% 30%;
-    --text-muted: 220 20% 50%;
-    --text-inverse: 0 0% 100%;
   }
 
   .dark {
@@ -61,7 +48,7 @@
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 220 60% 35%;
+    --primary: 280 80% 53%;
     --primary-foreground: 210 40% 98%;
 
     --secondary: 326 73% 70%;
@@ -78,20 +65,7 @@
 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 220 60% 35%;
-
-    /* Brand colors for dark mode */
-    --brand-navy: 220 60% 35%;
-    --brand-navy-light: 220 40% 45%;
-    --brand-light: 220 20% 15%;
-    --brand-accent: 174 53% 50%;
-    --brand-gray: 220 10% 70%;
-    
-    /* Text variants for dark mode */
-    --text-primary: 0 0% 95%;
-    --text-secondary: 0 0% 85%;
-    --text-muted: 0 0% 70%;
-    --text-inverse: 220 60% 15%;
+    --ring: 280 80% 53%;
   }
 }
 
@@ -103,32 +77,6 @@
   body {
     @apply bg-background text-foreground;
     font-feature-settings: "rlig" 1, "calt" 1;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-    font-weight: 400;
-    line-height: 1.6;
-  }
-
-  /* Enhanced typography for better readability */
-  h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold text-text-primary;
-    line-height: 1.3;
-  }
-  
-  h1 { @apply text-2xl; }
-  h2 { @apply text-xl; }
-  h3 { @apply text-lg; }
-  
-  p {
-    @apply text-text-primary;
-    line-height: 1.6;
-  }
-  
-  .text-muted {
-    @apply text-text-muted;
-  }
-  
-  .text-secondary {
-    @apply text-text-secondary;
   }
 
   .app-gradient {
@@ -136,7 +84,7 @@
   }
 }
 
-/* Custom animations and utilities */
+/* Custom animations */
 @layer utilities {
   .girls-shadow {
     box-shadow: 0 4px 14px 0 rgba(138, 43, 226, 0.15);
@@ -152,23 +100,5 @@
   
   .animate-enter {
     @apply animate-slide-up;
-  }
-  
-  /* Text contrast utilities */
-  .text-high-contrast {
-    @apply text-text-primary font-medium;
-  }
-  
-  .text-on-brand {
-    @apply text-white font-medium;
-    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  }
-  
-  .text-on-light {
-    @apply text-text-primary font-medium;
-  }
-  
-  .text-on-dark {
-    @apply text-white font-medium;
   }
 }

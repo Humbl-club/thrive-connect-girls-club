@@ -1,4 +1,3 @@
-
 import { createContext, useContext, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Session, User } from "@supabase/supabase-js";
@@ -66,6 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             created_at: new Date().toISOString(),
             instagram_handle: null,
             location: null,
+            role: 'user',
             updated_at: new Date().toISOString(),
           };
           setProfile(fallbackProfile);

@@ -81,30 +81,31 @@ export function CreateEventDialog({ selectedDate, onEventCreated }: CreateEventD
   return (
     <Dialog open={isOpen} onOpenChange={setIsOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="flex items-center gap-1">
+        <Button size="sm" className="flex items-center gap-1 bg-brand-navy hover:bg-brand-navy-light text-white font-medium">
           <Plus className="h-3.5 w-3.5" />
           <span className="text-xs">Add Event</span>
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-md mx-auto">
+      <DialogContent className="max-w-md mx-auto bg-white">
         <DialogHeader>
-          <DialogTitle>Create New Event</DialogTitle>
+          <DialogTitle className="text-text-primary font-semibold">Create New Event</DialogTitle>
         </DialogHeader>
         
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <Label htmlFor="title">Event Title *</Label>
+            <Label htmlFor="title" className="text-text-primary font-medium">Event Title *</Label>
             <Input
               id="title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Enter event title"
               disabled={isSubmitting}
+              className="mt-1"
             />
           </div>
           
           <div>
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description" className="text-text-primary font-medium">Description</Label>
             <Textarea
               id="description"
               value={description}
@@ -112,40 +113,44 @@ export function CreateEventDialog({ selectedDate, onEventCreated }: CreateEventD
               placeholder="Event description (optional)"
               disabled={isSubmitting}
               rows={3}
+              className="mt-1"
             />
           </div>
           
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <Label htmlFor="startTime">Start Time *</Label>
+              <Label htmlFor="startTime" className="text-text-primary font-medium">Start Time *</Label>
               <Input
                 id="startTime"
                 type="time"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 disabled={isSubmitting}
+                className="mt-1"
               />
             </div>
             <div>
-              <Label htmlFor="endTime">End Time</Label>
+              <Label htmlFor="endTime" className="text-text-primary font-medium">End Time</Label>
               <Input
                 id="endTime"
                 type="time"
                 value={endTime}
                 onChange={(e) => setEndTime(e.target.value)}
                 disabled={isSubmitting}
+                className="mt-1"
               />
             </div>
           </div>
           
           <div>
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location" className="text-text-primary font-medium">Location</Label>
             <Input
               id="location"
               value={location}
               onChange={(e) => setLocation(e.target.value)}
               placeholder="Event location (optional)"
               disabled={isSubmitting}
+              className="mt-1"
             />
           </div>
           
@@ -155,14 +160,14 @@ export function CreateEventDialog({ selectedDate, onEventCreated }: CreateEventD
               variant="outline"
               onClick={() => setIsOpen(false)}
               disabled={isSubmitting}
-              className="flex-1"
+              className="flex-1 border-brand-navy text-brand-navy hover:bg-brand-light font-medium"
             >
               Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting || !title.trim() || !startTime}
-              className="flex-1"
+              className="flex-1 bg-brand-navy hover:bg-brand-navy-light text-white font-medium"
             >
               {isSubmitting ? "Creating..." : "Create Event"}
             </Button>

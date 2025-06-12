@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -80,54 +79,44 @@ export default function Auth() {
   };
 
   return (
-    <div className="min-h-screen w-full lg:grid lg:grid-cols-2">
-      <div className="flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md space-y-8">
-          <div>
-            <PartyPopper className="mx-auto h-12 w-auto text-primary" />
-            <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">
-              {isLogin ? "Sign in to your account" : "Create your account"}
-            </h2>
-            <p className="mt-2 text-center text-sm text-muted-foreground">
-              Or{" "}
-              <button onClick={() => setIsLogin(!isLogin)} className="font-medium text-primary hover:text-primary/90">
-                {isLogin ? "create a new account" : "sign in to your account"}
-              </button>
-            </p>
-          </div>
-          <form onSubmit={handleAuthAction} className="mt-8 space-y-6">
-            {!isLogin && (
-              <div className="space-y-2">
-                <Label htmlFor="fullname">Full Name</Label>
-                <Input id="fullname" value={fullName} onChange={(e) => setFullName(e.target.value)} required={!isLogin} />
-              </div>
-            )}
-            <div className="space-y-2">
-              <Label htmlFor="email">Email address</Label>
-              <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
-              <div className="relative">
-                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
-                  {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
-                </button>
-              </div>
-            </div>
-            <Button type="submit" className="w-full" disabled={loading}>
-              {loading ? "Processing..." : (isLogin ? "Sign In" : "Create Account")}
-            </Button>
-          </form>
+    <div className="min-h-screen w-full flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+      <div className="w-full max-w-md space-y-8">
+        <div>
+          <PartyPopper className="mx-auto h-12 w-auto text-primary" />
+          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-foreground">
+            {isLogin ? "Sign in to your account" : "Create your account"}
+          </h2>
+          <p className="mt-2 text-center text-sm text-muted-foreground">
+            Or{" "}
+            <button onClick={() => setIsLogin(!isLogin)} className="font-medium text-primary hover:text-primary/90">
+              {isLogin ? "create a new account" : "sign in to your account"}
+            </button>
+          </p>
         </div>
-      </div>
-      <div className="hidden lg:block relative">
-        <div className="absolute inset-0 bg-girls-gradient opacity-80" />
-        <img
-          className="h-full w-full object-cover"
-          src="https://images.unsplash.com/photo-1552674605-db6ffd402907?q=80&w=1974&auto=format&fit=crop"
-          alt="Women exercising"
-        />
+        <form onSubmit={handleAuthAction} className="mt-8 space-y-6">
+          {!isLogin && (
+            <div className="space-y-2">
+              <Label htmlFor="fullname">Full Name</Label>
+              <Input id="fullname" value={fullName} onChange={(e) => setFullName(e.target.value)} required={!isLogin} />
+            </div>
+          )}
+          <div className="space-y-2">
+            <Label htmlFor="email">Email address</Label>
+            <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required autoComplete="email" />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <div className="relative">
+              <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required autoComplete="current-password" />
+              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute inset-y-0 right-0 flex items-center pr-3 text-muted-foreground">
+                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+              </button>
+            </div>
+          </div>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Processing..." : (isLogin ? "Sign In" : "Create Account")}
+          </Button>
+        </form>
       </div>
     </div>
   );

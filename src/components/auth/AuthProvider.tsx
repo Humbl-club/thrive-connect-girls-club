@@ -23,7 +23,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [initialCheckDone, setInitialCheckDone] = useState(false);
 
   const fetchUserProfile = async (currentUser: User) => {
     try {
@@ -97,7 +96,31 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     console.log("AuthProvider: Setting up auth state listener");
     
-    // Get initial session first
+    // Set up auth state change listener first
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, currentSession) => {
+        console.log("Auth state change:", event, { 
+          hasSession: !!currentSession, 
+          hasUser: !!currentSession?.user 
+        });
+        
+        if (!isMounted) return;
+        
+        if (currentSession?.user) {
+          setSession(currentSession);
+          setUser(currentSession.user);
+          await fetchUserProfile(currentSession.user);
+        } else {
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        setLoading(false);
+      }
+    );
+
+    // Get initial session
     const getInitialSession = async () => {
       try {
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
@@ -123,47 +146,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setProfile(null);
         }
         
-        setInitialCheckDone(true);
         setLoading(false);
       } catch (error) {
         console.error("Error in getInitialSession:", error);
         if (isMounted) {
-          setInitialCheckDone(true);
           setLoading(false);
         }
       }
     };
 
-    // Set up auth state change listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, currentSession) => {
-        console.log("Auth state change:", event, { 
-          hasSession: !!currentSession, 
-          hasUser: !!currentSession?.user 
-        });
-        
-        if (!isMounted) return;
-        
-        // Only process auth changes after initial check is done
-        if (!initialCheckDone) return;
-        
-        setLoading(true);
-        
-        if (currentSession?.user) {
-          setSession(currentSession);
-          setUser(currentSession.user);
-          await fetchUserProfile(currentSession.user);
-        } else {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Get initial session
     getInitialSession();
 
     return () => {
@@ -189,8 +180,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   console.log("AuthProvider rendering with state:", {
     loading,
     hasUser: !!user,
-    hasProfile: !!profile,
-    initialCheckDone
+    hasProfile: !!profile
   });
 
   return (

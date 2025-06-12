@@ -14,6 +14,7 @@ type AuthContextType = {
   loading: boolean;
   signOut: () => Promise<void>;
   refreshProfile: () => Promise<void>;
+  clearAuthState: () => void;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,6 +24,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+
+  const clearAuthState = () => {
+    console.log("AuthProvider: Clearing auth state manually");
+    setSession(null);
+    setUser(null);
+    setProfile(null);
+    setLoading(false);
+  };
 
   const fetchUserProfile = async (currentUser: User) => {
     try {
@@ -98,18 +107,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     
     const initializeAuth = async () => {
       try {
+        // Add a small delay to ensure Supabase is ready
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+        // Check if Supabase client is properly initialized
+        console.log("AuthProvider: Checking Supabase connection...");
+        
         // First, get the current session
         console.log("AuthProvider: Getting initial session...");
         const { data: { session: initialSession }, error } = await supabase.auth.getSession();
         
         if (error) {
           console.error("Error getting initial session:", error);
+          if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+            console.error("Supabase connection error - check your internet connection and Supabase config");
+            if (isMounted) {
+              setLoading(false);
+            }
+            return;
+          }
           throw error;
         }
         
         console.log("AuthProvider: Initial session result:", { 
           hasSession: !!initialSession, 
-          hasUser: !!initialSession?.user 
+          hasUser: !!initialSession?.user,
+          sessionId: initialSession?.access_token ? 'present' : 'missing'
         });
         
         if (!isMounted) return;
@@ -180,7 +203,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signOut = async () => {
     console.log("AuthProvider: Signing out...");
-    await supabase.auth.signOut();
+    try {
+      await supabase.auth.signOut();
+      // Clear local state immediately
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+      console.log("AuthProvider: Sign out completed");
+    } catch (error) {
+      console.error("Error signing out:", error);
+      // Clear local state even if signOut fails
+      setSession(null);
+      setUser(null);
+      setProfile(null);
+    }
   };
 
   const value = {
@@ -189,13 +225,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     profile,
     loading,
     signOut,
-    refreshProfile
+    refreshProfile,
+    clearAuthState
   };
 
   console.log("AuthProvider rendering with state:", {
     loading,
     hasUser: !!user,
-    hasProfile: !!profile
+    hasProfile: !!profile,
+    isProfileComplete: profile ? !!(profile.full_name && profile.username && profile.instagram_handle) : false
   });
 
   return (

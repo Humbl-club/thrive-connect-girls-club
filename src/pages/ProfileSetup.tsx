@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
 import { useToast } from "@/components/ui/use-toast";
-import { User, MapPin, Calendar, Instagram } from "lucide-react";
+import { User, MapPin, Calendar, Instagram, LogOut } from "lucide-react";
 import {
   Form,
   FormControl,
@@ -46,7 +46,7 @@ export default function ProfileSetup() {
   const [filteredCities, setFilteredCities] = useState<string[]>([]);
   const [showCities, setShowCities] = useState(false);
   const navigate = useNavigate();
-  const { user, refreshProfile } = useAuth();
+  const { user, refreshProfile, signOut } = useAuth();
   const { toast } = useToast();
 
   const form = useForm<FormValues>({
@@ -60,6 +60,12 @@ export default function ProfileSetup() {
       birthDate: ""
     }
   });
+
+  const handleSignOut = async () => {
+    console.log("ProfileSetup: User requested sign out");
+    await signOut();
+    navigate("/auth", { replace: true });
+  };
 
   const handleLocationChange = (value: string) => {
     form.setValue("location", value);
@@ -145,6 +151,19 @@ export default function ProfileSetup() {
           <p className="text-muted-foreground mt-2">
             Let's set up your fitness profile to get started
           </p>
+          
+          {/* Add sign out button */}
+          <div className="mt-4">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={handleSignOut}
+              className="text-xs"
+            >
+              <LogOut className="h-3 w-3 mr-2" />
+              Sign Out & Return to Login
+            </Button>
+          </div>
         </div>
 
         <Card>

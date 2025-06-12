@@ -77,6 +77,30 @@ export default {
 					accent: 'hsl(var(--brand-accent))',
 					gray: 'hsl(var(--brand-gray))',
 				},
+				text: {
+					primary: 'hsl(var(--text-primary))',
+					secondary: 'hsl(var(--text-secondary))',
+					muted: 'hsl(var(--text-muted))',
+					inverse: 'hsl(var(--text-inverse))',
+				},
+			},
+			fontFamily: {
+				sans: ['-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'Roboto', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+			},
+			fontSize: {
+				'xs': ['0.75rem', { lineHeight: '1.5' }],
+				'sm': ['0.875rem', { lineHeight: '1.5' }],
+				'base': ['1rem', { lineHeight: '1.6' }],
+				'lg': ['1.125rem', { lineHeight: '1.5' }],
+				'xl': ['1.25rem', { lineHeight: '1.4' }],
+				'2xl': ['1.5rem', { lineHeight: '1.3' }],
+				'3xl': ['1.875rem', { lineHeight: '1.2' }],
+			},
+			fontWeight: {
+				normal: '400',
+				medium: '500',
+				semibold: '600',
+				bold: '700',
 			},
 			borderRadius: {
 				lg: 'var(--radius)',

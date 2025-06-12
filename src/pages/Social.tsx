@@ -194,7 +194,7 @@ const Social = () => {
     <AppLayout>
       <div className="container px-4 py-6 pb-20 max-w-md mx-auto">
         <div className="flex justify-between items-center mb-6">
-          <h1 className="text-2xl font-bold text-brand-navy">Social</h1>
+          <h1 className="text-2xl font-bold text-text-primary">Social</h1>
           <Button variant="outline" size="icon" className="rounded-full border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white">
             <MessageSquare className="h-5 w-5" />
           </Button>
@@ -202,9 +202,9 @@ const Social = () => {
         
         <Tabs defaultValue="feed">
           <TabsList className="grid w-full grid-cols-3 mb-4 bg-brand-light border border-brand-navy/20">
-            <TabsTrigger value="feed" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Feed</TabsTrigger>
-            <TabsTrigger value="friends" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Friends</TabsTrigger>
-            <TabsTrigger value="challenges" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white">Challenges</TabsTrigger>
+            <TabsTrigger value="feed" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white font-medium">Feed</TabsTrigger>
+            <TabsTrigger value="friends" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white font-medium">Friends</TabsTrigger>
+            <TabsTrigger value="challenges" className="data-[state=active]:bg-brand-navy data-[state=active]:text-white font-medium">Challenges</TabsTrigger>
           </TabsList>
           
           <TabsContent value="feed" className="space-y-6 animate-enter">
@@ -215,11 +215,11 @@ const Social = () => {
             {loading ? (
               <div className="flex flex-col items-center justify-center py-10">
                 <Loader2 className="h-8 w-8 text-brand-navy animate-spin mb-4" />
-                <p className="text-brand-navy/70">Loading posts...</p>
+                <p className="text-text-muted font-medium">Loading posts...</p>
               </div>
             ) : posts.length === 0 ? (
               <div className="text-center py-10">
-                <p className="text-brand-navy/70">No posts yet.</p>
+                <p className="text-text-muted font-medium">No posts yet.</p>
               </div>
             ) : (
               <div className="space-y-4">
@@ -227,7 +227,7 @@ const Social = () => {
                   <FeedPost key={post.id} {...post} />
                 ))}
                 
-                <Button variant="outline" className="w-full border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white" onClick={handleLoadMore}>
+                <Button variant="outline" className="w-full border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white font-medium" onClick={handleLoadMore}>
                   Load More
                 </Button>
               </div>
@@ -240,14 +240,14 @@ const Social = () => {
           
           <TabsContent value="challenges" className="space-y-6 animate-enter">
             <div>
-              <h2 className="font-semibold text-lg mb-3 flex items-center text-brand-navy">
+              <h2 className="font-semibold text-lg mb-3 flex items-center text-text-primary">
                 <Trophy className="h-5 w-5 mr-2 text-brand-accent" /> Active Challenges
               </h2>
               
               {loadingLeaderboard ? (
                 <div className="flex flex-col items-center justify-center py-10">
                   <Loader2 className="h-8 w-8 text-brand-navy animate-spin mb-4" />
-                  <p className="text-brand-navy/70">Loading challenges...</p>
+                  <p className="text-text-muted font-medium">Loading challenges...</p>
                 </div>
               ) : (
                 <div className="space-y-4">

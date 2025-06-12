@@ -91,7 +91,7 @@ export default function Auth() {
             <p className="mt-2 text-center text-sm text-muted-foreground">
               Or{" "}
               <button onClick={() => setIsLogin(!isLogin)} className="font-medium text-primary hover:text-primary/90">
-                {isLogin ? "start your 14-day free trial" : "sign in to your account"}
+                {isLogin ? "create a new account" : "sign in to your account"}
               </button>
             </p>
           </div>

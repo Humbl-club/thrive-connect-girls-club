@@ -94,17 +94,67 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     let isMounted = true;
     
-    console.log("AuthProvider: Setting up auth state listener");
+    console.log("AuthProvider: Initializing auth...");
     
-    // Set up auth state change listener first
+    const initializeAuth = async () => {
+      try {
+        // First, get the current session
+        console.log("AuthProvider: Getting initial session...");
+        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("Error getting initial session:", error);
+          throw error;
+        }
+        
+        console.log("AuthProvider: Initial session result:", { 
+          hasSession: !!initialSession, 
+          hasUser: !!initialSession?.user 
+        });
+        
+        if (!isMounted) return;
+        
+        if (initialSession?.user) {
+          console.log("AuthProvider: Setting initial session and user");
+          setSession(initialSession);
+          setUser(initialSession.user);
+          await fetchUserProfile(initialSession.user);
+        } else {
+          console.log("AuthProvider: No initial session found");
+          setSession(null);
+          setUser(null);
+          setProfile(null);
+        }
+        
+        console.log("AuthProvider: Finished initial auth setup");
+        setLoading(false);
+        
+      } catch (error) {
+        console.error("Error in initializeAuth:", error);
+        if (isMounted) {
+          setLoading(false);
+        }
+      }
+    };
+
+    // Set up auth state change listener
+    console.log("AuthProvider: Setting up auth state listener");
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, currentSession) => {
-        console.log("Auth state change:", event, { 
+        console.log("Auth state change event:", event, { 
           hasSession: !!currentSession, 
           hasUser: !!currentSession?.user 
         });
         
         if (!isMounted) return;
+        
+        // Only handle auth state changes after initial load
+        if (loading) {
+          console.log("AuthProvider: Ignoring auth state change during initial load");
+          return;
+        }
+        
+        console.log("AuthProvider: Processing auth state change");
         
         if (currentSession?.user) {
           setSession(currentSession);
@@ -115,47 +165,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setUser(null);
           setProfile(null);
         }
-        
-        setLoading(false);
       }
     );
 
-    // Get initial session
-    const getInitialSession = async () => {
-      try {
-        const { data: { session: initialSession }, error } = await supabase.auth.getSession();
-        
-        if (error) {
-          console.error("Error getting initial session:", error);
-        }
-        
-        if (!isMounted) return;
-        
-        console.log("Initial session check:", { 
-          hasSession: !!initialSession, 
-          hasUser: !!initialSession?.user 
-        });
-        
-        if (initialSession?.user) {
-          setSession(initialSession);
-          setUser(initialSession.user);
-          await fetchUserProfile(initialSession.user);
-        } else {
-          setSession(null);
-          setUser(null);
-          setProfile(null);
-        }
-        
-        setLoading(false);
-      } catch (error) {
-        console.error("Error in getInitialSession:", error);
-        if (isMounted) {
-          setLoading(false);
-        }
-      }
-    };
-
-    getInitialSession();
+    // Initialize authentication
+    initializeAuth();
 
     return () => {
       console.log("AuthProvider: Cleaning up");
@@ -165,6 +179,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const signOut = async () => {
+    console.log("AuthProvider: Signing out...");
     await supabase.auth.signOut();
   };
 

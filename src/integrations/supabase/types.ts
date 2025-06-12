@@ -151,30 +151,39 @@ export type Database = {
           created_by: string
           description: string | null
           end_date: string
+          goal: number | null
           id: string
           start_date: string
           title: string
+          type: string | null
           updated_at: string | null
+          visibility: string | null
         }
         Insert: {
           created_at?: string | null
           created_by: string
           description?: string | null
           end_date: string
+          goal?: number | null
           id?: string
           start_date: string
           title: string
+          type?: string | null
           updated_at?: string | null
+          visibility?: string | null
         }
         Update: {
           created_at?: string | null
           created_by?: string
           description?: string | null
           end_date?: string
+          goal?: number | null
           id?: string
           start_date?: string
           title?: string
+          type?: string | null
           updated_at?: string | null
+          visibility?: string | null
         }
         Relationships: [
           {
@@ -312,6 +321,7 @@ export type Database = {
           id: string
           instagram_handle: string | null
           location: string | null
+          role: string | null
           updated_at: string
           username: string | null
         }
@@ -324,6 +334,7 @@ export type Database = {
           id: string
           instagram_handle?: string | null
           location?: string | null
+          role?: string | null
           updated_at?: string
           username?: string | null
         }
@@ -336,6 +347,7 @@ export type Database = {
           id?: string
           instagram_handle?: string | null
           location?: string | null
+          role?: string | null
           updated_at?: string
           username?: string | null
         }
